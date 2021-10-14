@@ -1,4 +1,6 @@
 import pickle
+from h3 import h3
+import pandas as pd
 
 def load_pickle(file_path):
     try:
@@ -36,5 +38,15 @@ def flatten_json(nested_json, exclude=['']):
 
     flatten(nested_json)
     return out
+
+def make_h3_index(df, lat, lon, resolution):
+    """ create h3 index column based on lat, lon and resolution
+        : param df: pandas df
+        : param lat: latitude column name
+        : param lon: longitude column name
+        : param resolution: uber h3 resolution
+    """
+    scales = [resolution] * len(df)
+    return list(map(h3.geo_to_h3, df[lat], df[lon], scales))    
 
        
