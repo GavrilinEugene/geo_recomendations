@@ -6,6 +6,7 @@ from get_data import administrative_list, infrastructure_list
 
 
 app = dash.Dash(__name__)
+app.title = 'geoRecomendations'
 server = app.server
 
 app.layout = get_layout()
@@ -44,4 +45,4 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
 
 
 if __name__ == '__main__':
-    app.run_server(host='localhost', port=5055)
+    app.run_server(debug=True)
