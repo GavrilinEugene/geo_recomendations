@@ -10,9 +10,9 @@ from config import mapbox_token
 # прерасчитанные данные
 df_adm_layers = get_administrative_area_polygon()
 dict_objects = {
-    # "Детские сады": get_points("Детские сады"),
+    "Детские сады": get_points("Детские сады"),
     "МФЦ": get_points("МФЦ"),
-    # "Школы": get_points("Школы"),
+    "Школы": get_points("Школы"),
 }
 
 dict_icons = {
