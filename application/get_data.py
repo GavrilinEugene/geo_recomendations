@@ -4,6 +4,11 @@ import pandas as pd
 import geopandas as gpd
 import json
 from shapely import wkb
+
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from config import postgis_conn_uri
 
 

@@ -1,5 +1,9 @@
 from dash import html, dcc
 import mydcc
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from get_data import administrative_list, infrastructure_list
 from get_data import default_infra, default_okrug
 from map_layout import update_map_data

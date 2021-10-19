@@ -1,4 +1,8 @@
 import plotly.graph_objs as go
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result
 from config import mapbox_token
 

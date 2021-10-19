@@ -1,5 +1,9 @@
 import dash
 from dash.dependencies import Input, Output, State
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from layout import get_layout
 from map_layout import update_map_data
 from get_data import administrative_list, infrastructure_list
