@@ -54,38 +54,22 @@ def get_points(type_='МФЦ'):
     """
 
     """
-    print(type_)
     if type_ == 'МФЦ':
-        sql = f"""select name, point_lat, point_lon, address_name
-             from public.fixed_points
-             where name = 'Мои документы, центр государственных услуг' """
+        table_name = "public.mfc_info"
     elif type_ == 'Школы':
-        sql = """
-            select name, point_lat, point_lon, address_name
-            from public.fixed_points a
-            where 1 = 1
-                AND type NOT IN ('attraction', 'station', 'street', 'parking', 'adm_div', 'building')
-                AND (lower(name) LIKE '%лицей%' OR lower(name) LIKE '%гимназия%' OR lower(name) LIKE '%общеобразовательная%школа%')
-                AND lower(name) NOT LIKE '%магазин%'
-                AND lower(name) NOT LIKE '%журнал%'
-                AND lower(name) NOT LIKE '%ветеринар%'
-                AND lower(name) NOT LIKE '%автошкола%'
-                AND lower(name) NOT LIKE '%автолицей%' 
-            """
+        table_name = "public.school_info"
     elif type_ == 'Детские сады':
-        sql = """
-            SELECT name, point_lat, point_lon, address_name
-            from public.fixed_points a
-            where 1 = 1
-                AND type NOT IN ('attraction', 'station', 'street', 'parking', 'adm_div', 'building')
-                AND (lower(name) LIKE '%ясли%' OR lower(name) LIKE '%детский%сад%')
-                AND lower(name) NOT LIKE '%магазин%'
-                AND lower(name) NOT LIKE '%журнал%'
-                AND lower(name) NOT LIKE '%ветеринар%'
-            """
-    df = pd.read_sql(con=engine, sql=text(sql))
-    return df
+        table_name = "public.kindergarden_info"
 
+    sql = f"""select name
+                , point_lat, point_lon
+                , address_name, pol_15min
+                , okrug_name, population as customers_cnt_home
+                from {table_name} """
+    gdf = gpd.GeoDataFrame.from_postgis(con=engine,
+                                        sql=text(sql), geom_col='pol_15min').reset_index()
+    geo_json = json.loads(gdf.to_json())    
+    return gdf, geo_json
 
 def get_optimization_result():
     """

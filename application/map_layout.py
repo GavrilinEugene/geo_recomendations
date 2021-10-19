@@ -3,6 +3,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+import json
 from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result
 from config import mapbox_token
 
@@ -49,23 +50,25 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
 
     traces = []
     map_layout = get_map_base_layout()
-    df_objects = dict_objects.get(type_)
+    df_objects, geo_json_infra = dict_objects.get(type_)
     if run_optinization == True:
-        df_optimization, geo_json, center_coord = get_optimization_result()
+        df_optimization, geo_json_opt, center_coord = get_optimization_result()
         
         traces.append(go.Choroplethmapbox(z=df_optimization['customers_cnt_home'],
                                           locations=df_optimization['index'],
                                           below=True,
-                                          geojson=geo_json,
+                                          geojson=geo_json_opt,
                                           showscale=False,
-                                        #   hoverinfo='none',
-                                          name = 'новые объекты',
+                                        #   hoverinfo='test',
+                                        #   name = 'Население',
                                           marker_line_width=0.1, marker_opacity=0.7))                                       
     else:
         center_coord = get_administrative_area_center(current_adm_layer)                                   
 
-    traces.append(go.Scattermapbox(lat=df_objects.point_lat,
-                                   lon=df_objects.point_lon,
+    # рисуем выбранную инфраструктуру в выбранном районе
+    df_objects_type = df_objects[df_objects['okrug_name'] == current_adm_layer]
+    traces.append(go.Scattermapbox(lat=df_objects_type.point_lat,
+                                   lon=df_objects_type.point_lon,
                                    mode='markers',
                                    marker=dict(
                                        autocolorscale=False,
@@ -74,6 +77,16 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                    ),
                                    name=type_,
                                    text=df_objects['name'] + '\n' + df_objects['address_name']))
+
+    # рисуем изохроны, которые относятся к выбранным инфраструктурам
+    traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
+                                          locations=df_objects_type['index'],
+                                          below=True,
+                                          geojson=geo_json_infra,
+                                          showscale=False,
+                                        #   hoverinfo='z',
+                                          name = 'Население',
+                                          marker_line_width=0.1, marker_opacity=0.7))   
 
     figure = go.Figure(data=traces,layout=map_layout)  
     return figure, center_coord
