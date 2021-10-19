@@ -89,7 +89,7 @@ def get_layout():
                             html.Div(
                                 [
                                     html.Button(
-                                        'Запустить поиск локаций', id='generate_button', n_clicks=0),
+                                        'Запустить поиск локаций', id='generate_button', n_clicks=0, className="eight columns"),
                                 ],
                                 className="row"
                             ),

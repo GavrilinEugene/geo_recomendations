@@ -49,4 +49,4 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(host='localhost', port=5055)
