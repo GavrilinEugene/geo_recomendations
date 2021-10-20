@@ -1,12 +1,11 @@
+from map_layout import update_map_data
+from get_data import default_infra, dafault_okrug_idx
+from get_data import administrative_list, infrastructure_list
 from dash import html, dcc
 import mydcc
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from get_data import administrative_list, infrastructure_list
-from get_data import default_infra, dafault_okrug_idx
-from map_layout import update_map_data
 
 
 def create_administrative_selector():
@@ -48,7 +47,10 @@ def create_infrustructure_selector():
 
 
 def get_layout():
-    
+
+    first_geo_map, first_analytics = update_map_data(
+                            administrative_list[dafault_okrug_idx]['label'], default_infra)
+
     return html.Div(
         [
             dcc.Store(id='aggregate_data'),
@@ -61,46 +63,80 @@ def get_layout():
                             # controllers
                             html.Div(
                                 [
-                                    # filter by region
-                                    create_administrative_selector(),
+                                    
+                                    html.Div(
+                                        [
+                                            # filter by region
+                                            create_administrative_selector(),
+                                        ],
+                                        className='row',
+                                    ),
+                                    html.Div(
+                                        [
+                                            # filter by infrastructure
+                                            create_infrustructure_selector(),
+                                        ],
+                                        className='row',
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.P(
+                                                'Новых объектов инфраструктуры:')
+                                        ],
+                                        className="row"
+                                    ),
+                                    dcc.Slider(
+                                        id='infrastructure_n_selector',
+                                        min=1,
+                                        max=10,
+                                        value=1,
+                                        marks={i: i for i in range(1, 11, 1)},
+                                        className="dcc_control"
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Button(
+                                                'Запустить поиск локаций', id='generate_button', n_clicks=0, className="eight columns"),
+                                        ],
+                                        className="row"
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.P(
+                                                'Анализ покрытия инфраструктурой:')
+                                        ],
+                                        className="row"
+                                    ),
+                                    html.Div(
+                                        [
+                                            dcc.Graph(id='analytics_graph')
+                                        ],
+                                        className="row"
+                                    ),
                                 ],
-                                className='row',
+                                className='container',
                             ),
-                            html.Div(
-                                [
-                                    # filter by infrastructure
-                                    create_infrustructure_selector(),
-                                ],
-                                className='row',
-                            ),
-                            html.Div(
-                                [
-                                    html.P('Новых объектов инфраструктуры:')
-                                ],
-                                className="row"
-                            ),
-                            dcc.Slider(
-                                id='infrastructure_n_selector',
-                                min=1,
-                                max=10,
-                                value=1,
-                                marks={i: i for i in range(1, 11, 1)}
-                            ),
-                            html.Div(
-                                [
-                                    html.Button(
-                                        'Запустить поиск локаций', id='generate_button', n_clicks=0, className="eight columns"),
-                                ],
-                                className="row"
-                            ),
+
+                            # # аналитика
+                            # html.Div(
+                            #     [
+                            #         html.Div(
+                            #             [
+                            #                 html.P(
+                            #                     'Новых объектов инфраструктуры:')
+                            #             ],
+                            #             className="row"
+                            #         ),
+                            #     ],
+                            #     className='container',
+                            # ),
                         ],
                         className='pretty_container four columns',
                     ),
                     # карта
                     html.Div([
                         mydcc.Listener_mapbox(id="listener", aim='city_map'),
-                        dcc.Graph(id='city_map', figure=update_map_data(
-                            administrative_list[dafault_okrug_idx]['label'], default_infra))
+                        dcc.Graph(id='city_map', figure=first_geo_map)
                     ],
                         className='pretty_container nine columns'
                     ),

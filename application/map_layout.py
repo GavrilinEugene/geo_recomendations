@@ -3,13 +3,17 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import json
-from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result
+from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result, get_total_population
 from config import mapbox_token
 
 
-# прерасчитанные данные
+# датафрейм с границами округов
 df_adm_layers = get_administrative_area_polygon()
+
+# датафрейм с населением по округам
+df_total_population = get_total_population()
+
+# инфраструктура
 dict_objects = {
     "Детские сады": get_points("Детские сады"),
     "МФЦ": get_points("МФЦ"),
@@ -38,21 +42,25 @@ def get_map_base_layout():
     )
     return map_layout
 
-def _select_infrastructure(current_adm_layer, df_objects):
+
+def _select_infrastructure_data(current_adm_layer, df):
     """
-    
+    Агрегирование данных на административные границы
+
+    :param current_adm_layer: текущий административный округ
+    :param df: датафрейм с данными по административным округам
     """
     if current_adm_layer == 'Все':
-        df_objects_type = df_objects
+        df_type = df
     elif current_adm_layer == 'Новая Москва':
         list_okrug = ['Троицкий административный округ','Новомосковский административный округ']
-        df_objects_type = df_objects[df_objects['okrug_name'].isin(list_okrug)]
+        df_type = df[df['okrug_name'].isin(list_okrug)]
     elif current_adm_layer == 'Старая Москва':
         list_okrug = ['Троицкий административный округ','Новомосковский административный округ', 'Все']
-        df_objects_type = df_objects[~df_objects['okrug_name'].isin(list_okrug)]
+        df_type = df[~df['okrug_name'].isin(list_okrug)]
     else:        
-        df_objects_type = df_objects[df_objects['okrug_name'] == current_adm_layer]
-    return df_objects_type
+        df_type = df[df['okrug_name'] == current_adm_layer]
+    return df_type
 
 
 def get_map_figure(type_, current_adm_layer, run_optinization):
@@ -63,7 +71,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     :param current_adm_layer: текущий административный округ
     :param run_optinization: запуск оптимизации с отрисовкой результата
     """
-
+    analytics_data = {}
     traces = []
     map_layout = get_map_base_layout()
     df_objects, geo_json_infra = dict_objects.get(type_)
@@ -77,19 +85,23 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                           showscale=False,
                                         #   hoverinfo='test',
                                         #   name = 'Население',
-                                          marker_line_width=0.1, marker_opacity=0.7))                                       
+                                          marker_line_width=0.1, marker_opacity=0.7))  
+        analytics_data['optimization'] = df_optimization['customers_cnt_home'].sum()                                                                         
     else:
         center_coord = get_administrative_area_center(current_adm_layer)                                   
 
 
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
-    df_objects_type = _select_infrastructure(current_adm_layer, dict_objects)
+    df_objects_type = _select_infrastructure_data(current_adm_layer, df_objects)
+    df_population = _select_infrastructure_data(current_adm_layer, df_total_population)
+    analytics_data['current_infrastructure'] = df_objects_type['customers_cnt_home'].sum()
+    analytics_data['total_population'] = df_population['customers_cnt_home'].sum()    
+
     traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
                                           locations=df_objects_type['index'],
                                           below=True,
                                           geojson=geo_json_infra,
                                           showscale=False,
-                                        #   hoverinfo='z',
                                           name = 'Население',
                                           marker_line_width=0.1, marker_opacity=0.7))
 
@@ -107,7 +119,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
 
 
     figure = go.Figure(data=traces,layout=map_layout)  
-    return figure, center_coord
+    return figure, center_coord, analytics_data
 
 
 def create_layers(current_adm_layer):
@@ -140,10 +152,11 @@ def update_map_data(current_adm_layer, current_infra_name, run_optinization=Fals
     :param zoom: уровень масштабирования карты
     """
 
-    figure, center_coord = get_map_figure(current_infra_name, current_adm_layer, run_optinization)
+    figure, center_coord, analytics_data = get_map_figure(current_infra_name, current_adm_layer, run_optinization)
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
     figure['layout']['mapbox']['zoom'] = zoom
-    return figure
+    print(analytics_data)
+    return figure, analytics_data

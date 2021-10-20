@@ -22,7 +22,7 @@ def update_graph(mouseData):
     print(mouseData)
 
 
-@app.callback(Output('city_map', 'figure'),
+@app.callback([Output('city_map', 'figure'), Output('analytics_graph', 'figure')],
               [Input('okrug_name_selector', 'value'),
                Input('infrastructure_name_selector', 'value'),
                Input('generate_button', 'n_clicks'),
@@ -45,8 +45,8 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
     new_adm_layer = administrative_list[okrug_name_index]['label']
 
     new_infra_name = infrastructure_list[infra_name_index]['label']
-    figure = update_map_data(new_adm_layer, new_infra_name, run_optinization)
-    return figure
+    figure, analytics_data = update_map_data(new_adm_layer, new_infra_name, run_optinization)
+    return figure, figure
 
 
 if __name__ == '__main__':

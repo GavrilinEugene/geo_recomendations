@@ -99,7 +99,18 @@ def get_optimization_result():
                                         sql=text(sql), geom_col='pol_15min').reset_index()
     geo_json = json.loads(gdf.to_json())   
     center_point = wkb.loads(gdf['center'].iloc[0], hex=True)                                     
-    return gdf , geo_json, center_point                                      
+    return gdf , geo_json, center_point
+
+def get_total_population():
+    sql = """
+        select okrug_name, sum(customers_cnt_home) as customers_cnt_home
+        from public.all_data_by_zids
+        where okrug_name is not null
+        group by okrug_name
+    """
+    df = pd.read_sql(
+        con=engine, sql=sql)
+    return df                                            
 
 engine = create_connection()
 administrative_list = get_administrative_area_list()
@@ -108,6 +119,9 @@ infrastructure_list = [
     {'label': 'Школы', 'value': 1},
     {'label': 'Детские сады', 'value': 2}]
 
+
+# дефолтные значения
 dafault_okrug_idx = 2
-default_okrug = administrative_list[dafault_okrug_idx]['label']
+# default_okrug = administrative_list[dafault_okrug_idx]['label']
 default_infra = infrastructure_list[0]['label']
+
