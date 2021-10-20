@@ -40,11 +40,12 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
         run_optinization = True
 
     if trigger is not None and trigger['prop_id'].split('.')[0] == 'mouse_hidden_button':
-        print(relayoutData)       
+        print(relayoutData)     
 
     new_adm_layer = administrative_list[okrug_name_index]['label']
+
     new_infra_name = infrastructure_list[infra_name_index]['label']
-    figure = update_map_data(new_adm_layer, new_infra_name, run_optinization, 12)
+    figure = update_map_data(new_adm_layer, new_infra_name, run_optinization)
     return figure
 
 

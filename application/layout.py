@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from get_data import administrative_list, infrastructure_list
-from get_data import default_infra, default_okrug
+from get_data import default_infra, dafault_okrug_idx
 from map_layout import update_map_data
 
 
@@ -20,7 +20,7 @@ def create_administrative_selector():
         dcc.Dropdown(
             id='okrug_name_selector',
             options=administrative_list,
-            value=0,
+            value=dafault_okrug_idx,
             className="dcc_control"
         )
     ],
@@ -100,7 +100,7 @@ def get_layout():
                     html.Div([
                         mydcc.Listener_mapbox(id="listener", aim='city_map'),
                         dcc.Graph(id='city_map', figure=update_map_data(
-                            default_okrug, default_infra))
+                            administrative_list[dafault_okrug_idx]['label'], default_infra))
                     ],
                         className='pretty_container nine columns'
                     ),

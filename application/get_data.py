@@ -19,23 +19,24 @@ def create_connection():
     return create_engine(postgis_conn_uri)
 
 
-def get_administrative_area_list(column='okrug_name'):
+def get_administrative_area_list():
     """
-
+    Получение списка всех округов
     """
     df = pd.read_sql(
-        con=engine, sql=f"select distinct {column} from public.adm_regions where {column} is not null")
-    df['value'] = df.index
+        con=engine, sql=f"""select okrug_name, index as value
+         from public.okrug_name_with_geometry 
+         order by index""")
     list_names = []
     for _, row in df.iterrows():
-        list_names.append({'label': row[column],
-                           'value': row['value']})
+        list_names.append({'label': row['okrug_name'],
+                           'value': row['value']})                                                                      
     return list_names
 
 
 def get_administrative_area_polygon():
     """
-
+    Получение списка полигонов всех округов
     """
     gdf = gpd.GeoDataFrame.from_postgis(
         con=engine, sql=f"select * from public.okrug_name_with_geometry", geom_col='geometry')
@@ -55,7 +56,16 @@ def get_points(type_='МФЦ'):
 
     """
     if type_ == 'МФЦ':
+        sql = f"""select name
+                , point_lat, point_lon
+                , address_name, pol_15min
+                , okrug_name, sum_prop_home as customers_cnt_home
+                from public.mfc_info"""
         table_name = "public.mfc_info"
+        gdf = gpd.GeoDataFrame.from_postgis(con=engine,
+                                        sql=text(sql), geom_col='pol_15min').reset_index()
+        geo_json = json.loads(gdf.to_json())    
+        return gdf, geo_json
     elif type_ == 'Школы':
         table_name = "public.school_info"
     elif type_ == 'Детские сады':
@@ -92,11 +102,12 @@ def get_optimization_result():
     return gdf , geo_json, center_point                                      
 
 engine = create_connection()
-administrative_list = get_administrative_area_list("okrug_name")
+administrative_list = get_administrative_area_list()
 infrastructure_list = [
     {'label': 'МФЦ', 'value': 0},
     {'label': 'Школы', 'value': 1},
     {'label': 'Детские сады', 'value': 2}]
 
-default_okrug = administrative_list[0]['label']
+dafault_okrug_idx = 2
+default_okrug = administrative_list[dafault_okrug_idx]['label']
 default_infra = infrastructure_list[0]['label']

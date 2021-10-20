@@ -38,6 +38,22 @@ def get_map_base_layout():
     )
     return map_layout
 
+def _select_infrastructure(current_adm_layer, df_objects):
+    """
+    
+    """
+    if current_adm_layer == 'Все':
+        df_objects_type = df_objects
+    elif current_adm_layer == 'Новая Москва':
+        list_okrug = ['Троицкий административный округ','Новомосковский административный округ']
+        df_objects_type = df_objects[df_objects['okrug_name'].isin(list_okrug)]
+    elif current_adm_layer == 'Старая Москва':
+        list_okrug = ['Троицкий административный округ','Новомосковский административный округ', 'Все']
+        df_objects_type = df_objects[~df_objects['okrug_name'].isin(list_okrug)]
+    else:        
+        df_objects_type = df_objects[df_objects['okrug_name'] == current_adm_layer]
+    return df_objects_type
+
 
 def get_map_figure(type_, current_adm_layer, run_optinization):
     """
@@ -65,8 +81,19 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     else:
         center_coord = get_administrative_area_center(current_adm_layer)                                   
 
+
+    # рисуем изохроны, которые относятся к выбранным инфраструктурам
+    df_objects_type = _select_infrastructure(current_adm_layer, dict_objects)
+    traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
+                                          locations=df_objects_type['index'],
+                                          below=True,
+                                          geojson=geo_json_infra,
+                                          showscale=False,
+                                        #   hoverinfo='z',
+                                          name = 'Население',
+                                          marker_line_width=0.1, marker_opacity=0.7))
+
     # рисуем выбранную инфраструктуру в выбранном районе
-    df_objects_type = df_objects[df_objects['okrug_name'] == current_adm_layer]
     traces.append(go.Scattermapbox(lat=df_objects_type.point_lat,
                                    lon=df_objects_type.point_lon,
                                    mode='markers',
@@ -78,15 +105,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                    name=type_,
                                    text=df_objects['name'] + '\n' + df_objects['address_name']))
 
-    # рисуем изохроны, которые относятся к выбранным инфраструктурам
-    traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
-                                          locations=df_objects_type['index'],
-                                          below=True,
-                                          geojson=geo_json_infra,
-                                          showscale=False,
-                                        #   hoverinfo='z',
-                                          name = 'Население',
-                                          marker_line_width=0.1, marker_opacity=0.7))   
 
     figure = go.Figure(data=traces,layout=map_layout)  
     return figure, center_coord
@@ -111,7 +129,7 @@ def create_layers(current_adm_layer):
     return layers
 
 
-def update_map_data(current_adm_layer, current_infra_name, run_optinization=False, run_human_example=False, zoom=12):
+def update_map_data(current_adm_layer, current_infra_name, run_optinization=False, run_human_example=False, zoom=9):
     """
     Обновление данных карты: подложки с арминистративными границами и текущими инфраструктурными объектами
 
