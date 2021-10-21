@@ -51,6 +51,15 @@ def get_administrative_area_center(filter_name):
     return gdf.iloc[0]['geometry']
 
 
+def get_population_for_polygon():
+    """
+    Получение списка полигонов 500X500 с населением
+    """
+    gdf = gpd.GeoDataFrame.from_postgis(
+        con=engine,sql=f"select geometry2 as geometry,customers_cnt_home from public.all_data_by_zids", geom_col='geometry')
+    return json.loads(gdf.to_json()),gdf
+
+
 def get_points(type_='МФЦ'):
     """
 
