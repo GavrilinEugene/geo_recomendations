@@ -33,6 +33,7 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
     """
 
     """
+    print("start update")
 
     trigger = dash.callback_context.triggered[0]
     run_optinization = False
@@ -46,6 +47,7 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
 
     new_infra_name = infrastructure_list[infra_name_index]['label']
     figure, analytics_data = update_map_data(new_adm_layer, new_infra_name, run_optinization)
+    print("end update")
     return figure, figure
 
 

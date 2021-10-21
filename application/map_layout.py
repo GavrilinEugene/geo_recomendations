@@ -3,27 +3,32 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result, get_total_population,get_population_for_polygon
+import get_data as gd 
 from config import mapbox_token
 
 
 # датафрейм с границами округов
-df_adm_layers = get_administrative_area_polygon()
+df_adm_layers = gd.get_administrative_area_polygon()
 
 # датафрейм с населением по округам
-df_total_population = get_total_population()
+df_total_population = gd.get_total_population()
+
+# подложка с населением
+geojson, gdf = gd.get_population_for_polygon()
 
 # инфраструктура
 dict_objects = {
-    "Детские сады": get_points("Детские сады"),
-    "МФЦ": get_points("МФЦ"),
-    "Школы": get_points("Школы"),
+    "Детские сады": gd.get_points("Детские сады"),
+    "МФЦ": gd.get_points("МФЦ"),
+    "Школы": gd.get_points("Школы"),
+    "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
 }
 
 dict_icons = {
     "МФЦ": 'town-hall',
     "Школы": 'library',
     "Детские сады": 'playground',
+    "Больницы и поликлиники": 'hospital',
 }
 
 
@@ -71,40 +76,39 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     :param current_adm_layer: текущий административный округ
     :param run_optinization: запуск оптимизации с отрисовкой результата
     """
+
+    print("start_get_map")
     analytics_data = {}
     traces = []
-    
-    
     
     map_layout = get_map_base_layout()
     df_objects, geo_json_infra = dict_objects.get(type_)
     
     if run_optinization == True:
-        df_optimization, geo_json_opt, center_coord = get_optimization_result()
-        
-        traces.append(go.Choroplethmapbox(z=df_optimization['customers_cnt_home'],
-                                          locations=df_optimization['index'],
+        df_opt, geo_json_opt, center_coord = gd.get_optimization_result(current_adm_layer, type_)
+        traces.append(go.Choroplethmapbox(z=df_opt['customers_cnt_home'],
+                                          locations=df_opt['index'],
                                           below=True,
                                           geojson=geo_json_opt,
                                           showscale=False,
-                                        #   hoverinfo='test',
-                                        #   name = 'Население',
-                                          marker_line_width=0.1, marker_opacity=0.7))  
-        analytics_data['optimization'] = df_optimization['customers_cnt_home'].sum()                                                                         
+                                          colorscale = [[0, 'rgba(255,0,0,.5)'], [1, 'rgba(255,0,0,.5)']],
+                                          marker = dict(line=dict(width=2, color = 'red'), opacity=0.9),
+                                        )) 
+
+        traces.append(go.Scattermapbox(lat=df_opt.point_lat,
+                                    lon=df_opt.point_lon,
+                                    mode='markers',
+                                    marker=dict(
+                                        autocolorscale=False,
+                                        size=32,
+                                        symbol='marker'
+                                    ),
+                                    name=type_,
+                                    text=df_opt['customers_cnt_home']))                                          
+
+        analytics_data['optimization'] = df_opt['customers_cnt_home'].sum()                                                                         
     else:
-        center_coord = get_administrative_area_center(current_adm_layer)  
-    
-    # рисуем подложку с цветами по количеству проживающего населения
-    geojson,gdf = get_population_for_polygon()
-    traces.append(go.Choroplethmapbox(z=gdf['customers_cnt_home'],
-                            locations = gdf.index, 
-                            colorscale = 'ylgn',
-                            colorbar = dict(thickness=20, ticklen=3),
-                            below=-1,
-                            geojson = geojson,
-                            hoverinfo='z',
-                            name = 'Население',        
-                            marker_line_width=0, marker_opacity=0.3))
+        center_coord = gd.get_administrative_area_center(current_adm_layer)  
     
 
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
@@ -113,13 +117,33 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     analytics_data['current_infrastructure'] = df_objects_type['customers_cnt_home'].sum()
     analytics_data['total_population'] = df_population['customers_cnt_home'].sum()    
 
+    gdf_type = _select_infrastructure_data(current_adm_layer, gdf)
+    # рисуем подложку с цветами по количеству проживающего населения
+    traces.append(go.Choroplethmapbox(z=gdf_type['customers_cnt_home'],
+                            locations = gdf_type.index, 
+                            colorscale = 'ylgn',
+                            colorbar = dict(thickness=20, ticklen=3),
+                            below="water",
+                            geojson = geojson,
+                            marker = dict(line=dict(width=0)),
+                            showscale=False,
+                            hoverinfo='z',
+                            name = 'Население',        
+                            marker_line_width=0, marker_opacity=0.7))
+    
+    # изохроны под инфраструктуру
+    for feature in geo_json_infra['features']:
+        feature['properties']['line-color'] = "red"
+        feature['properties']['line-width'] = 5
     traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
                                           locations=df_objects_type['index'],
                                           below=True,
                                           geojson=geo_json_infra,
                                           showscale=False,
-                                          name = 'Население',
-                                          marker_line_width=0.1, marker_opacity=0.7))
+                                          colorscale = [[0, 'rgba(255,255,255,.01)'], [1, 'rgba(255,255,255,.01)']],
+                                          marker = dict(line=dict(width=1, color = 'black'), opacity=0.9),
+                                          name = 'Население в изохроне',
+                                          ))
 
     # рисуем выбранную инфраструктуру в выбранном районе
     traces.append(go.Scattermapbox(lat=df_objects_type.point_lat,
@@ -133,8 +157,8 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                    name=type_,
                                    text=df_objects['name'] + '\n' + df_objects['address_name']))
 
-
     figure = go.Figure(data=traces,layout=map_layout)  
+    print("end_get_map")
     return figure, center_coord, analytics_data
 
 
@@ -154,6 +178,7 @@ def create_layers(current_adm_layer):
                    line=dict(width=feature['properties']['line-width']),
                    color=feature['properties']['line-color'],
                    ) for feature in df_adm_layers['features']]
+              
     return layers
 
 
@@ -167,12 +192,12 @@ def update_map_data(current_adm_layer, current_infra_name, run_optinization=Fals
     :param run_human_example: отрисовка результата по коодинате, которую ввёл пользователь
     :param zoom: уровень масштабирования карты
     """
-
+    print("run_optimization", run_optinization)
     figure, center_coord, analytics_data = get_map_figure(current_infra_name, current_adm_layer, run_optinization)
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
-    figure['layout']['mapbox']['zoom'] = zoom
+    figure['layout']['mapbox']['zoom'] = zoom if run_optinization == False else 13
     print(analytics_data)
     return figure, analytics_data
