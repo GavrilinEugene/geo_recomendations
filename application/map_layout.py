@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result, get_total_population
+from get_data import get_administrative_area_polygon, get_points, get_administrative_area_center, get_optimization_result, get_total_population,get_population_for_polygon
 from config import mapbox_token
 
 
@@ -88,8 +88,18 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                           marker_line_width=0.1, marker_opacity=0.7))  
         analytics_data['optimization'] = df_optimization['customers_cnt_home'].sum()                                                                         
     else:
-        center_coord = get_administrative_area_center(current_adm_layer)                                   
-
+        center_coord = get_administrative_area_center(current_adm_layer)  
+        
+    # рисуем подложку с цветами по количеству проживающего населения
+    geojson,gdf = get_population_for_polygon()
+    traces.append(go.Choroplethmapbox(z=gdf['customers_cnt_home'],
+                             locations = gdf.index, 
+                            colorscale = 'ylgn',
+                            colorbar = dict(thickness=20, ticklen=3),
+                            below=True,
+                            geojson = geojson,
+                            hoverinfo ='none',        
+                            marker_line_width=0.1, marker_opacity=0.7))
 
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
     df_objects_type = _select_infrastructure_data(current_adm_layer, df_objects)
