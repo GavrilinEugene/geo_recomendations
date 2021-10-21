@@ -79,18 +79,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     map_layout = get_map_base_layout()
     df_objects, geo_json_infra = dict_objects.get(type_)
     
-    # рисуем подложку с цветами по количеству проживающего населения
-    geojson,gdf = get_population_for_polygon()
-    traces.append(go.Choroplethmapbox(z=gdf['customers_cnt_home'],
-                            locations = gdf.index, 
-                            colorscale = 'ylgn',
-                            colorbar = dict(thickness=20, ticklen=3),
-                            below=-1,
-                            geojson = geojson,
-                            hoverinfo='z',
-                            name = 'Население',        
-                            marker_line_width=0, marker_opacity=0.3))
-    
     if run_optinization == True:
         df_optimization, geo_json_opt, center_coord = get_optimization_result()
         
@@ -105,7 +93,18 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
         analytics_data['optimization'] = df_optimization['customers_cnt_home'].sum()                                                                         
     else:
         center_coord = get_administrative_area_center(current_adm_layer)  
-        
+    
+    # рисуем подложку с цветами по количеству проживающего населения
+    geojson,gdf = get_population_for_polygon()
+    traces.append(go.Choroplethmapbox(z=gdf['customers_cnt_home'],
+                            locations = gdf.index, 
+                            colorscale = 'ylgn',
+                            colorbar = dict(thickness=20, ticklen=3),
+                            below=-1,
+                            geojson = geojson,
+                            hoverinfo='z',
+                            name = 'Население',        
+                            marker_line_width=0, marker_opacity=0.3))
     
 
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
