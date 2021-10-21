@@ -56,16 +56,7 @@ def get_points(type_='МФЦ'):
 
     """
     if type_ == 'МФЦ':
-        sql = f"""select name
-                , point_lat, point_lon
-                , address_name, pol_15min
-                , okrug_name, sum_prop_home as customers_cnt_home
-                from public.mfc_info"""
         table_name = "public.mfc_info"
-        gdf = gpd.GeoDataFrame.from_postgis(con=engine,
-                                        sql=text(sql), geom_col='pol_15min').reset_index()
-        geo_json = json.loads(gdf.to_json())    
-        return gdf, geo_json
     elif type_ == 'Школы':
         table_name = "public.school_info"
     elif type_ == 'Детские сады':
