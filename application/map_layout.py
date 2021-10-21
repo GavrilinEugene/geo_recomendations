@@ -91,6 +91,8 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                           below=True,
                                           geojson=geo_json_opt,
                                           showscale=False,
+                                          showlegend = True,
+                                          name = "Пешая доступность от инфраструктуры (новые объекты)",
                                           colorscale = [[0, 'rgba(255,0,0,.5)'], [1, 'rgba(255,0,0,.5)']],
                                           marker = dict(line=dict(width=2, color = 'red'), opacity=0.9),
                                         )) 
@@ -103,7 +105,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                         size=32,
                                         symbol='marker'
                                     ),
-                                    name=type_,
+                                    name=f"{type_} (новые)",
                                     text=df_opt['customers_cnt_home']))                                          
 
         analytics_data['optimization'] = df_opt['customers_cnt_home'].sum()                                                                         
@@ -128,7 +130,8 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                             marker = dict(line=dict(width=0)),
                             showscale=False,
                             hoverinfo='z',
-                            name = 'Население',        
+                            name = 'Численность населения',  
+                            showlegend = True,     
                             marker_line_width=0, marker_opacity=0.7))
     
     # изохроны под инфраструктуру
@@ -142,7 +145,8 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                           showscale=False,
                                           colorscale = [[0, 'rgba(255,255,255,.01)'], [1, 'rgba(255,255,255,.01)']],
                                           marker = dict(line=dict(width=1, color = 'black'), opacity=0.9),
-                                          name = 'Население в изохроне',
+                                          name = 'Пешая доступность от инфраструктуры (текущая)',
+                                          showlegend = True,  
                                           ))
 
     # рисуем выбранную инфраструктуру в выбранном районе
@@ -154,7 +158,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                        size=16,
                                        symbol=dict_icons[type_]
                                    ),
-                                   name=type_,
+                                   name=f"{type_} (текущие)",
                                    text=df_objects['name'] + '\n' + df_objects['address_name']))
 
     figure = go.Figure(data=traces,layout=map_layout)  
