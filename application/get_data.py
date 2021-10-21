@@ -118,7 +118,8 @@ def get_optimization_result(current_adm_layer, type_='МФЦ'):
             order by sum(sum_prop_home) desc
             limit 1
         )
-        select cr.sum_prop_home as customers_cnt_home, cr.kind, ibw.center, pol_15min_with_base from optimizer.combinator_results cr
+        select cr.sum_prop_home as customers_cnt_home, cr.kind, ibw.center, pol_15min_with_base, count_of_new_entities
+        from optimizer.combinator_results cr
         natural join t
         left join izochrones_by_walk ibw on (ibw.zid = cr.ezid)
     """
@@ -156,3 +157,4 @@ infrastructure_list = [
 # дефолтные значения
 dafault_okrug_idx = 2
 default_infra = infrastructure_list[0]['label']
+default_infra_n_value = 1

@@ -1,11 +1,12 @@
-import dash
-from dash.dependencies import Input, Output, State
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import dash
+from dash.dependencies import Input, Output, State
 
 from layout import get_layout
 from map_layout import update_map_data
+from analytics_layout import update_analytics_figure
 from get_data import administrative_list, infrastructure_list
 
 
@@ -29,7 +30,7 @@ def update_graph(mouseData):
                Input('mouse_hidden_button', 'n_clicks')], 
               [State('listener', 'data'), State('city_map', 'relayoutData'), State('infrastructure_n_selector', 'value')]
 )
-def update_output(okrug_name_index, infra_name_index, geterator_button_click, mouse_hidden_button_click, mouse_data, relayoutData,infra_n_value):
+def update_output(okrug_name_index, infra_name_index, geterator_button_click, mouse_hidden_button_click, mouse_data, relayoutData, infra_n_value):
     """
 
     """
@@ -46,9 +47,11 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, mo
     new_adm_layer = administrative_list[okrug_name_index]['label']
 
     new_infra_name = infrastructure_list[infra_name_index]['label']
-    figure, analytics_data = update_map_data(new_adm_layer, new_infra_name, run_optinization)
+    figure, analytics_data = update_map_data(new_adm_layer, new_infra_name, infra_n_value, run_optinization)
+
+    analytics_figure = update_analytics_figure(analytics_data, infra_n_value)
     print("end update")
-    return figure, figure
+    return figure, analytics_figure
 
 
 if __name__ == '__main__':

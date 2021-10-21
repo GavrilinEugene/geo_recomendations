@@ -1,6 +1,7 @@
 import plotly.graph_objs as go
 import os
 import sys
+import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import get_data as gd 
@@ -68,13 +69,14 @@ def _select_infrastructure_data(current_adm_layer, df):
     return df_type
 
 
-def get_map_figure(type_, current_adm_layer, run_optinization):
+def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     """
     Создание скатерплота с данными инфраструктуры
 
     :param type_: текущий тип инфраструктуры
     :param current_adm_layer: текущий административный округ
     :param run_optinization: запуск оптимизации с отрисовкой результата
+    :param infra_n_value: числно новых объектов инфраструктуры
     """
 
     print("start_get_map")
@@ -107,8 +109,10 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
                                     ),
                                     name=f"{type_} (новые)",
                                     text=df_opt['customers_cnt_home']))                                          
-
-        analytics_data['optimization'] = df_opt['customers_cnt_home'].sum()                                                                         
+        df_opt = df_opt.sort_values(by = ['count_of_new_entities'])
+        df_opt['idx'] = df_opt['count_of_new_entities']
+        df_opt['cum_sum'] = np.cumsum(df_opt['customers_cnt_home'])
+        analytics_data.update(dict(zip(df_opt['idx'], df_opt['cum_sum'])))                                                                    
     else:
         center_coord = gd.get_administrative_area_center(current_adm_layer)  
     
@@ -186,18 +190,19 @@ def create_layers(current_adm_layer):
     return layers
 
 
-def update_map_data(current_adm_layer, current_infra_name, run_optinization=False, run_human_example=False, zoom=9):
+def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_optinization=False, run_human_example=False, zoom=9):
     """
     Обновление данных карты: подложки с арминистративными границами и текущими инфраструктурными объектами
 
     :param current_adm_layer: текущий административный округ
     :param current_infra_name: текущая инфраструктура
+    :param infra_n_value: текущее число новых инфраструктурных объектов
     :param run_optinization: запуск оптимизации с отрисовкой результата
     :param run_human_example: отрисовка результата по коодинате, которую ввёл пользователь
     :param zoom: уровень масштабирования карты
     """
     print("run_optimization", run_optinization)
-    figure, center_coord, analytics_data = get_map_figure(current_infra_name, current_adm_layer, run_optinization)
+    figure, center_coord, analytics_data = get_map_figure(current_infra_name, current_adm_layer, run_optinization, infra_n_value)
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['mapbox']['center'] = dict(

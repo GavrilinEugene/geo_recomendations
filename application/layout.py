@@ -1,11 +1,14 @@
-from map_layout import update_map_data
-from get_data import default_infra, dafault_okrug_idx
-from get_data import administrative_list, infrastructure_list
-from dash import html, dcc
-import mydcc
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from dash import html, dcc
+import mydcc
+from analytics_layout import update_analytics_figure
+from map_layout import update_map_data
+from analytics_layout import update_analytics_figure
+from get_data import default_infra, dafault_okrug_idx, default_infra_n_value
+from get_data import administrative_list, infrastructure_list
 
 
 def create_administrative_selector():
@@ -48,8 +51,9 @@ def create_infrustructure_selector():
 
 def get_layout():
 
-    first_geo_map, first_analytics = update_map_data(
-                            administrative_list[dafault_okrug_idx]['label'], default_infra)
+    geo_map_fig, first_analytics = update_map_data(
+                            administrative_list[dafault_okrug_idx]['label'], default_infra, infra_n_value = default_infra_n_value)
+    analytics_fig = update_analytics_figure(first_analytics, infra_n_value = default_infra_n_value)
 
     return html.Div(
         [
@@ -109,9 +113,9 @@ def get_layout():
                                     ),
                                     html.Div(
                                         [
-                                            dcc.Graph(id='analytics_graph')
+                                            dcc.Graph(id='analytics_graph', figure=analytics_fig)
                                         ],
-                                        className="row"
+                                        className="pretty_container"
                                     ),
                                 ],
                                 className='container',
@@ -136,7 +140,7 @@ def get_layout():
                     # карта
                     html.Div([
                         mydcc.Listener_mapbox(id="listener", aim='city_map'),
-                        dcc.Graph(id='city_map', figure=first_geo_map)
+                        dcc.Graph(id='city_map', figure=geo_map_fig)
                     ],
                         className='pretty_container nine columns'
                     ),
