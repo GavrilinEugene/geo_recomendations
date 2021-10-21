@@ -93,12 +93,13 @@ def get_map_figure(type_, current_adm_layer, run_optinization):
     # рисуем подложку с цветами по количеству проживающего населения
     geojson,gdf = get_population_for_polygon()
     traces.append(go.Choroplethmapbox(z=gdf['customers_cnt_home'],
-                             locations = gdf.index, 
+                            locations = gdf.index, 
                             colorscale = 'ylgn',
                             colorbar = dict(thickness=20, ticklen=3),
                             below=True,
                             geojson = geojson,
-                            hoverinfo ='none',        
+                            hoverinfo='z',
+                            name = 'Население',        
                             marker_line_width=0.1, marker_opacity=0.7))
 
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
