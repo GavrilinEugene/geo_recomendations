@@ -59,9 +59,11 @@ def get_population_for_polygon():
     return json.loads(gdf.to_json()), gdf
 
 
-def get_points(type_):
+def get_points(current_adm_layer):
     """
     Получение объектов инфраструктуры с честным распределением населения
+
+    :param current_adm_layer: текущий административный район
     """
     dict_rename = {'МФЦ': "public.mfc_info",
                    'Школы': "public.school_info",
@@ -72,7 +74,7 @@ def get_points(type_):
                 , point_lat, point_lon
                 , address_name, pol_15min
                 , okrug_name, population as customers_cnt_home
-                from {dict_rename.get(type_)} """
+                from {dict_rename.get(current_adm_layer)} """
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql), geom_col='pol_15min').reset_index()
 
@@ -82,9 +84,7 @@ def get_points(type_):
     gdf_isochrone['index'] = gdf_isochrone.index
     geo_json_isochrone = json.loads(gpd.GeoDataFrame(
         gdf_isochrone, geometry='pol_15min')[['index', 'pol_15min']].to_json())
-    geo_json = json.loads(
-        gdf[['index', 'customers_cnt_home', 'pol_15min']].to_json())
-    return gdf, geo_json, gdf_isochrone, geo_json_isochrone
+    return gdf, gdf_isochrone, geo_json_isochrone
 
 
 def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ'):

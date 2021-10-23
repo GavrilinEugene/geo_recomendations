@@ -106,8 +106,10 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
     traces = []
 
     map_layout = get_map_base_layout()
-    df_objects, geo_json_infra, df_simple_isochrone, geo_json_union = dict_objects.get(
-        infra_type)
+    if dict_objects.get(infra_type, 0) == 0:
+        dict_objects[infra_type] = gd.get_points(infra_type)
+    df_objects, df_simple_isochrone, geo_json_union = dict_objects[infra_type]
+
 
     if run_optinization == True:
         df_opt, geo_json_opt, center_coord, df_opt_analytics = \
