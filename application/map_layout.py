@@ -27,13 +27,6 @@ dict_objects = {
     # "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
 }
 
-dict_icons = {
-    "МФЦ": 'town-hall',
-    "Школы": 'library',
-    "Детские сады": 'playground',
-    "Больницы и поликлиники": 'hospital',
-}
-
 
 def get_map_base_layout():
     """
@@ -73,7 +66,7 @@ def _select_infrastructure_data(current_adm_layer, df):
 
 def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
     """
-        Добавление слоёв на карту, которые связаны с оптимизацией: новые локации и изохроны
+    Добавление слоёв на карту, которые связаны с оптимизацией: новые локации и изохроны
     """
     traces.append(go.Choroplethmapbox(z=df_opt['index'],
         locations=df_opt['index'],
@@ -91,8 +84,9 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                    mode='markers',
                                    marker=dict(
                                        autocolorscale=False,
-                                       size=20,
-                                       symbol='marker'
+                                       size=12,
+                                       symbol='circle',
+                                       color='red'
                                    ),
                                    name=f"{infra_type} (новые)",
                                    text=df_opt['index']
@@ -167,8 +161,9 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                    mode='markers',
                                    marker=dict(
                                        autocolorscale=False,
-                                       size=16,
-                                       symbol=dict_icons[infra_type]
+                                       size=8,
+                                       symbol='circle',
+                                       color='black'
                                    ),
                                    name=f"{infra_type} (текущие)",
                                    text=df_objects_type['name'] + '\\n' + df_objects_type['address_name']))
@@ -215,4 +210,5 @@ def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_op
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
     figure['layout']['mapbox']['zoom'] = zoom if run_optinization == False else 13
+    
     return figure, analytics_data

@@ -43,6 +43,7 @@ def update_output(okrug_name_index, infra_name_index, geterator_button_click, in
 
     new_infra_name = infrastructure_list[infra_name_index]['label']
     figure, analytics_data = update_map_data(new_adm_layer, new_infra_name, infra_n_value, run_optinization)
+    # figure.update_layout(legend=dict(itemsizing='constant'))
 
     analytics_figure = update_analytics_figure(analytics_data)
     return figure, analytics_figure
