@@ -1,23 +1,19 @@
+from config import postgis_conn_uri
+from shapely.ops import cascaded_union
+from shapely import wkb
+import json
+import geopandas as gpd
+import pandas as pd
+from sqlalchemy import text, create_engine
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
-from sqlalchemy import create_engine
-from sqlalchemy import text
-import pandas as pd
-import geopandas as gpd
-import json
-from shapely import wkb
-from shapely.ops import unary_union, cascaded_union
-
-# внутренние 
-from config import postgis_conn_uri
-
 
 def create_connection():
     """
-
+    Создание соединения к postgis базе
     """
     return create_engine(postgis_conn_uri)
 
@@ -68,7 +64,7 @@ def get_points(type_):
     Получение объектов инфраструктуры с честным распределением населения
     """
     dict_rename = {'МФЦ': "public.mfc_info",
-                   'Школы': "public.school_info", 
+                   'Школы': "public.school_info",
                    'Детские сады': "public.kindergarden_info",
                    'Больницы и поликлиники': "public.clinics_info"}
 
@@ -80,16 +76,18 @@ def get_points(type_):
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql), geom_col='pol_15min').reset_index()
 
-    # формируем одну объединённую изохрону объектов на каждый округ                                    
-    gdf_isochrone = gdf.groupby(['okrug_name'])['pol_15min'].apply(lambda x: cascaded_union(x)).reset_index()
+    # формируем одну объединённую изохрону объектов на каждый округ
+    gdf_isochrone = gdf.groupby(['okrug_name'])['pol_15min'].apply(
+        lambda x: cascaded_union(x)).reset_index()
     gdf_isochrone['index'] = gdf_isochrone.index
-    geo_json_isochrone = json.loads(gpd.GeoDataFrame(gdf_isochrone, geometry = 'pol_15min')[['index', 'pol_15min']].to_json())                                   
-    geo_json = json.loads(gdf[['index', 'customers_cnt_home', 'pol_15min']].to_json())
+    geo_json_isochrone = json.loads(gpd.GeoDataFrame(
+        gdf_isochrone, geometry='pol_15min')[['index', 'pol_15min']].to_json())
+    geo_json = json.loads(
+        gdf[['index', 'customers_cnt_home', 'pol_15min']].to_json())
     return gdf, geo_json, gdf_isochrone, geo_json_isochrone
 
 
-
-def get_optimization_result(current_adm_layer, n_results = 1, infra_type='МФЦ'):
+def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ'):
     """
     получение предрассчитанных данных оптимизации
 
@@ -99,7 +97,7 @@ def get_optimization_result(current_adm_layer, n_results = 1, infra_type='МФЦ
 
     """
     dict_rename = {'МФЦ': "mfc",
-                   'Школы': "school", 
+                   'Школы': "school",
                    'Детские сады': "kindergarden",
                    'Больницы и поликлиники': "clinic"}
 
@@ -109,7 +107,7 @@ def get_optimization_result(current_adm_layer, n_results = 1, infra_type='МФЦ
         list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"
         sql_filter = f"location_filter in ({list_okrug})"
     elif current_adm_layer == 'Старая Москва':
-        list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"  
+        list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"
         sql_filter = f"location_filter not in ({list_okrug})"
     else:
         sql_filter = f"location_filter = '{current_adm_layer}'"
@@ -134,12 +132,12 @@ def get_optimization_result(current_adm_layer, n_results = 1, infra_type='МФЦ
         and zids_len <= {n_results}
     """
 
-    df_analytics = pd.read_sql(con = engine, sql = sql_popultaion)
+    df_analytics = pd.read_sql(con=engine, sql=sql_popultaion)
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql_locations), geom_col='pol_15min_with_base').reset_index()
     gdf['point_lat'] = gdf['center'].apply(lambda x: wkb.loads(x, hex=True).y)
     gdf['point_lon'] = gdf['center'].apply(lambda x: wkb.loads(x, hex=True).x)
-                          
+
     geo_json = json.loads(gdf.to_json())
     center_point = wkb.loads(gdf['center'].iloc[0], hex=True)
     return gdf, geo_json, center_point, df_analytics

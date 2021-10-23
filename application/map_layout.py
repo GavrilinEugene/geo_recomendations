@@ -6,9 +6,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
-# внутренние импорты
-
-
 # датафрейм с границами округов
 df_adm_layers = gd.get_administrative_area_polygon()
 
@@ -22,8 +19,8 @@ geojson, gdf_population = gd.get_population_for_polygon()
 dict_objects = {
     "Детские сады": gd.get_points("Детские сады"),
     "МФЦ": gd.get_points("МФЦ"),
-    "Школы": gd.get_points("Школы"),
-    "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
+    # "Школы": gd.get_points("Школы"),
+    # "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
 }
 
 

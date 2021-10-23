@@ -51,17 +51,18 @@ def update_analytics_figure(analytics_data):
     )
 
     fig.update_layout(
-        title_text="Пешая доступность инфраструктуры<br>доля покрытия",
+        title=dict(
+            text="Доля покрытия инфраструктурой в пешей доступности",
+            font=dict(
+                size=14,
+            )
+        ),
         barmode="stack",
         xaxis=dict(
                 title=f'Население выбранного округа<br> Всего: {round(total_poputaliton)} человек',
-                titlefont_size=14,
-                tickfont_size=14,
             ),
         yaxis=dict(
                 title='Число новых объектов инфраструктуры',
-                titlefont_size=14,
-                tickfont_size=14,
             ), 
         margin=dict(l=0, r=0, b=0, t=50),
         plot_bgcolor ="rgba(0, 0, 0, 0)",
