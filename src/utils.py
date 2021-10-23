@@ -1,6 +1,8 @@
 import pickle
 from h3 import h3
 import pandas as pd
+import csv
+from io import StringIO
 
 def load_pickle(file_path):
     try:
@@ -48,5 +50,37 @@ def make_h3_index(df, lat, lon, resolution):
     """
     scales = [resolution] * len(df)
     return list(map(h3.geo_to_h3, df[lat], df[lon], scales))    
+
+
+def psql_insert_copy(table, conn, keys, data_iter):
+    # gets a DBAPI connection that can provide a cursor
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+
+        columns = ', '.join('"{}"'.format(k) for k in keys)
+        if table.schema:
+            table_name = '{}.{}'.format(table.schema, table.name)
+        else:
+            table_name = table.name
+
+        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
+            table_name, columns)
+        cur.copy_expert(sql=sql, file=s_buf)
+
+def wkb_hexer(line):
+    """string -> postgis geometry hex"""
+    return line.wkb_hex
+
+
+def drop_table(engine, table_name):
+    try:
+        c = engine.connect()
+        c.execute(f"drop table {table_name}")
+    except:
+        pass
 
        

@@ -1,9 +1,9 @@
 import pandas as pd
 import geopandas as gpd
 from shapely.ops import cascaded_union
-import csv
-from io import StringIO
+
 from sqlalchemy import create_engine
+from utils import *
 import argparse
 
 """
@@ -11,44 +11,13 @@ import argparse
 """
 
 
-def psql_insert_copy(table, conn, keys, data_iter):
-    # gets a DBAPI connection that can provide a cursor
-    dbapi_conn = conn.connection
-    with dbapi_conn.cursor() as cur:
-        s_buf = StringIO()
-        writer = csv.writer(s_buf)
-        writer.writerows(data_iter)
-        s_buf.seek(0)
-
-        columns = ', '.join('"{}"'.format(k) for k in keys)
-        if table.schema:
-            table_name = '{}.{}'.format(table.schema, table.name)
-        else:
-            table_name = table.name
-
-        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
-            table_name, columns)
-        cur.copy_expert(sql=sql, file=s_buf)
-
-def wkb_hexer(line):
-    """string -> postgis geometry hex"""
-    return line.wkb_hex
-
-
-def drop_table(engine, table_name):
-    try:
-        c = engine.connect()
-        # conn = c.connection
-        c.execute(f"drop table {table_name}")
-    except:
-        pass
 
 def run(args):
 
     print(args)
     login = args.login
     password = args.password
-    s = args.server
+    s = args.serv
 
     # регионы
     df_adm = gpd.read_file("data/raw/admzones2021/admzones2021.shp")
