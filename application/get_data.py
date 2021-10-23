@@ -1,16 +1,18 @@
-from config import postgis_conn_uri
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+
 from sqlalchemy import create_engine
 from sqlalchemy import text
 import pandas as pd
 import geopandas as gpd
 import json
 from shapely import wkb
-from shapely.ops import unary_union
-from shapely.ops import cascaded_union
+from shapely.ops import unary_union, cascaded_union
 
-import os
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# внутренние 
+from config import postgis_conn_uri
 
 
 def create_connection():
@@ -83,8 +85,14 @@ def get_points(type_):
     return gdf, geo_json
 
 
-def get_optimization_result(current_adm_layer, type_='МФЦ'):
+
+def get_optimization_result(current_adm_layer, n_results = 1, infra_type='МФЦ'):
     """
+    получение предрассчитанных данных оптимизации
+
+    :param current_adm_layer: текущий административный район
+    :param n_results: число новых объектов
+    :param infra_type: текущий вид инфраструктуры
 
     """
     dict_rename = {'МФЦ': "mfc",
@@ -93,48 +101,45 @@ def get_optimization_result(current_adm_layer, type_='МФЦ'):
                    'Больницы и поликлиники': "clinic"}
 
     if current_adm_layer == 'Все':
-        sql_filter = "and 1=1"
+        sql_filter = "location_filter = 'all'"
     elif current_adm_layer == 'Новая Москва':
         list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"
-        sql_filter = f"and dz.okrug_name in ({list_okrug})"
+        sql_filter = f"location_filter in ({list_okrug})"
     elif current_adm_layer == 'Старая Москва':
         list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"  
-        sql_filter = f"and dz.okrug_name not in ({list_okrug})"
+        sql_filter = f"location_filter not in ({list_okrug})"
     else:
-        sql_filter = f"and dz.okrug_name = '{current_adm_layer}'"
-     
-    sql = f"""
-            with t as (
-            select experiment_ts, iteration, count_of_new_entities,
-                sum(sum_prop_home) total_prop_sum
-            from optimizer.combinator_results cr
-            where 1=1
-            and count_of_new_entities = 1
-            and kind like '%new_{dict_rename.get(type_)}' -- mfc | new_mfc
-            and exists(
-                select from all_data_by_zids dz
-                where 1=1
-                and dz.cell_zid = cr.ezid
-                and cr.kind like 'new%' --- проверяем что новый в нужном районе
-                {sql_filter}
-                )
-            group by experiment_ts, iteration, count_of_new_entities
-            order by sum(sum_prop_home) desc
-            limit 1
-        )
-        select cr.sum_prop_home as customers_cnt_home, cr.kind, ibw.center, pol_15min_with_base, count_of_new_entities
-        from optimizer.combinator_results cr
-        natural join t
-        left join izochrones_by_walk ibw on (ibw.zid = cr.ezid)
+        sql_filter = f"location_filter = '{current_adm_layer}'"
+
+    sql_locations = f"""
+        with t as (
+            select * from optimizer.coverage_report
+            where kind = '{dict_rename.get(infra_type)}'
+            and {sql_filter}
+            and zids_len = {n_results}
+        limit 1)
+        select center, pol_15min_with_base
+        from izochrones_by_walk iw, t
+        where iw.zid = any(t.zid_list);
     """
+
+    sql_popultaion = f"""
+        select zids_len, added_coverage 
+        from optimizer.coverage_report
+        where kind = '{dict_rename.get(infra_type)}'
+        and {sql_filter}
+        and zids_len <= {n_results}
+    """
+
+    df_analytics = pd.read_sql(con = engine, sql = sql_popultaion)
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
-                                        sql=text(sql), geom_col='pol_15min_with_base').reset_index()
-    gdf = gdf[gdf['kind'] == f'new_{dict_rename.get(type_)}']
+                                        sql=text(sql_locations), geom_col='pol_15min_with_base').reset_index()
     gdf['point_lat'] = gdf['center'].apply(lambda x: wkb.loads(x, hex=True).y)
-    gdf['point_lon'] = gdf['center'].apply(lambda x: wkb.loads(x, hex=True).x)                                 
+    gdf['point_lon'] = gdf['center'].apply(lambda x: wkb.loads(x, hex=True).x)
+                          
     geo_json = json.loads(gdf.to_json())
     center_point = wkb.loads(gdf['center'].iloc[0], hex=True)
-    return gdf, geo_json, center_point
+    return gdf, geo_json, center_point, df_analytics
 
 
 def get_total_population():

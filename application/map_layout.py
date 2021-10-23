@@ -23,8 +23,8 @@ geojson, gdf = gd.get_population_for_polygon()
 dict_objects = {
     "Детские сады": gd.get_points("Детские сады"),
     "МФЦ": gd.get_points("МФЦ"),
-    "Школы": gd.get_points("Школы"),
-    "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
+    # "Школы": gd.get_points("Школы"),
+    # "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
 }
 
 dict_icons = {
@@ -71,11 +71,39 @@ def _select_infrastructure_data(current_adm_layer, df):
     return df_type
 
 
-def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
+def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
+    """
+        Добавление слоёв на карту, которые связаны с оптимизацией: новые локации и изохроны
+    """
+    traces.append(go.Choroplethmapbox(z=df_opt['index'],
+        locations=df_opt['index'],
+        below=True,
+        geojson=geo_json_opt,
+        showscale=False,
+        showlegend=True,
+        name="Пешая доступность от инфраструктуры (новые объекты)",
+        colorscale = 'ylgn',
+        marker=dict(line=dict(width=2, color='rgb(0, 51, 0)'), opacity=0.7),
+    ))
+
+    traces.append(go.Scattermapbox(lat=df_opt.point_lat,
+                                   lon=df_opt.point_lon,
+                                   mode='markers',
+                                   marker=dict(
+                                       autocolorscale=False,
+                                       size=20,
+                                       symbol='marker'
+                                   ),
+                                   name=f"{infra_type} (новые)",
+                                   text=df_opt['index']
+                                   ))
+
+
+def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_value):
     """
     Создание скатерплота с данными инфраструктуры
 
-    :param type_: текущий тип инфраструктуры
+    :param infra_type: текущий тип инфраструктуры
     :param current_adm_layer: текущий административный округ
     :param run_optinization: запуск оптимизации с отрисовкой результата
     :param infra_n_value: числно новых объектов инфраструктуры
@@ -85,34 +113,15 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     traces = []
     
     map_layout = get_map_base_layout()
-    df_objects, geo_json_infra = dict_objects.get(type_)
+    df_objects, geo_json_infra = dict_objects.get(infra_type)
     
     if run_optinization == True:
-        df_opt, geo_json_opt, center_coord = gd.get_optimization_result(current_adm_layer, type_)
-        traces.append(go.Choroplethmapbox(z=df_opt['customers_cnt_home'],
-                                          locations=df_opt['index'],
-                                          below=True,
-                                          geojson=geo_json_opt,
-                                          showscale=False,
-                                          showlegend = True,
-                                          name = "Пешая доступность от инфраструктуры (новые объекты)",
-                                          colorscale = [[0, 'rgba(255,0,0,.5)'], [1, 'rgba(255,0,0,.5)']],
-                                          marker = dict(line=dict(width=2, color = 'red'), opacity=0.9),
-                                        )) 
+        df_opt, geo_json_opt, center_coord, df_opt_analytics = \
+             gd.get_optimization_result(current_adm_layer, infra_n_value, infra_type)
 
-        traces.append(go.Scattermapbox(lat=df_opt.point_lat,
-                                    lon=df_opt.point_lon,
-                                    mode='markers',
-                                    marker=dict(
-                                        size=32,
-                                        symbol='marker'
-                                    ),
-                                    name=f"{type_} (новые)",
-                                    text=df_opt['customers_cnt_home']))                                          
-        df_opt = df_opt.sort_values(by = ['count_of_new_entities'])
-        df_opt['idx'] = df_opt['count_of_new_entities']
-        df_opt['cum_sum'] = np.cumsum(df_opt['customers_cnt_home'])
-        analytics_data.update(dict(zip(df_opt['idx'], df_opt['cum_sum'])))                                                                    
+        _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type)             
+
+        analytics_data.update(dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))                                                           
     else:
         center_coord = gd.get_administrative_area_center(current_adm_layer)  
     
@@ -159,10 +168,10 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                                    marker=dict(
                                        autocolorscale=False,
                                        size=16,
-                                       symbol=dict_icons[type_]
+                                       symbol=dict_icons[infra_type]
                                    ),
-                                   name=f"{type_} (текущие)",
-                                   text=df_objects_type['name'] + '\n' + df_objects_type['address_name']))
+                                   name=f"{infra_type} (текущие)",
+                                   text=df_objects_type['name'] + '\\n' + df_objects_type['address_name']))
 
     figure = go.Figure(data=traces,layout=map_layout)  
     return figure, center_coord, analytics_data
@@ -175,8 +184,8 @@ def create_layers(current_adm_layer):
     :param current_adm_layer: текущий административный округ (выделяется красным)
     """
     for feature in df_adm_layers['features']:
-        feature['properties']['line-color'] = "red" if feature['properties']['okrug_name'] == current_adm_layer else "black"
-        feature['properties']['line-width'] = 3 if feature['properties']['okrug_name'] == current_adm_layer else 0.1
+        feature['properties']['line-color'] = "green" if feature['properties']['okrug_name'] == current_adm_layer else "black"
+        feature['properties']['line-width'] = 2.5 if feature['properties']['okrug_name'] == current_adm_layer else 0.1
     layers = [dict(sourcetype='geojson',
                    source=feature['geometry'],
                    type='line',

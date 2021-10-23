@@ -5,7 +5,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from dash import html, dcc
 from analytics_layout import update_analytics_figure
 from map_layout import update_map_data
-from analytics_layout import update_analytics_figure
 from get_data import default_infra, dafault_okrug_idx, default_infra_n_value
 from get_data import administrative_list, infrastructure_list
 
@@ -52,7 +51,7 @@ def get_layout():
 
     geo_map_fig, first_analytics = update_map_data(
                             administrative_list[dafault_okrug_idx]['label'], default_infra, infra_n_value = default_infra_n_value)
-    analytics_fig = update_analytics_figure(first_analytics, infra_n_value = default_infra_n_value)
+    analytics_fig = update_analytics_figure(first_analytics)
 
     return html.Div(
         [
