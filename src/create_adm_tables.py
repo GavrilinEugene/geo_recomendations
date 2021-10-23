@@ -55,8 +55,8 @@ def run(args):
     df_all_reg.loc[df_all_reg.index.max()+1] = ['Все', combined]
     df_all_reg.loc[df_all_reg.index.max()+1] = ['Новая Москва', combined_new]
     df_all_reg.loc[df_all_reg.index.max()+1] = ['Старая Москва', combined_old]
-    combined_old['index'] = [3,4,5,6,7,8,9,10,11,12,13,14,0,1,2]
-    combined_old = combined_old.sort_values(by = ['index'])
+    df_all_reg['index'] = [3,4,5,6,7,8,9,10,11,12,13,14,0,1,2]
+    df_all_reg = df_all_reg.sort_values(by = ['index'])
 
     drop_table(engine, 'public.okrug_name_with_geometry')
     df_all_reg['geometry'] = df_all_reg['geometry'].apply(wkb_hexer)
