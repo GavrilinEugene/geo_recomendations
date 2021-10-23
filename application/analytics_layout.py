@@ -35,7 +35,7 @@ def update_analytics_figure(analytics_data):
         textposition="inside",
         textangle=0,
         marker=dict(color = ratios,
-                     colorscale='ylgn', line_width = 2, opacity=0.6),
+                     colorscale='ylgn', line_width = 2, opacity=0.9),
         textfont_color="black",
         orientation='h'
     ))
@@ -51,11 +51,10 @@ def update_analytics_figure(analytics_data):
     )
 
     fig.update_layout(
-        title_text="Пешая доступность инфраструктуры",
+        title_text="Пешая доступность инфраструктуры<br>доля покрытия",
         barmode="stack",
         xaxis=dict(
-                # text='Acceptance: '+str(11)+'%\nAlpha:'),
-                title=f'Население региона<br> Всего: {round(total_poputaliton)} человек',
+                title=f'Население выбранного округа<br> Всего: {round(total_poputaliton)} человек',
                 titlefont_size=14,
                 tickfont_size=14,
             ),

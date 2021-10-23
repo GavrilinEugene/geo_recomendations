@@ -79,10 +79,13 @@ def get_points(type_):
                 from {dict_rename.get(type_)} """
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql), geom_col='pol_15min').reset_index()
-    # gdf['combined_isochrone'] = gdf.name.map(gdf.groupby(['name'])['pol_15min'].apply(lambda x: cascaded_union(x)))
-    # geo_json = json.loads(gdf[['index', 'customers_cnt_home', 'combined_isochrone']].to_json())                                        
+
+    # формируем одну объединённую изохрону объектов на каждый округ                                    
+    gdf_isochrone = gdf.groupby(['okrug_name'])['pol_15min'].apply(lambda x: cascaded_union(x)).reset_index()
+    gdf_isochrone['index'] = gdf_isochrone.index
+    geo_json_isochrone = json.loads(gpd.GeoDataFrame(gdf_isochrone, geometry = 'pol_15min')[['index', 'pol_15min']].to_json())                                   
     geo_json = json.loads(gdf[['index', 'customers_cnt_home', 'pol_15min']].to_json())
-    return gdf, geo_json
+    return gdf, geo_json, gdf_isochrone, geo_json_isochrone
 
 
 
