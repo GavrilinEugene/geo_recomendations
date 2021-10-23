@@ -31,7 +31,7 @@ def update_analytics_figure(analytics_data):
         x=values,
         offset=0,
         customdata = np.transpose([ratios, delta]),
-        texttemplate="%{customdata[0]}% (+%{customdata[1]}%)",
+        texttemplate="%{customdata[0]}%",
         textposition="inside",
         textangle=0,
         marker=dict(color = ratios,
@@ -51,16 +51,17 @@ def update_analytics_figure(analytics_data):
     )
 
     fig.update_layout(
-        title_text="Анализ покрытия инфраструктурой",
+        title_text="Пешая доступность инфраструктуры",
         barmode="stack",
         xaxis=dict(
-                title=f'население региона: {round(total_poputaliton)} человек',
-                titlefont_size=16,
+                # text='Acceptance: '+str(11)+'%\nAlpha:'),
+                title=f'Население региона<br> Всего: {round(total_poputaliton)} человек',
+                titlefont_size=14,
                 tickfont_size=14,
             ),
         yaxis=dict(
                 title='Число новых объектов инфраструктуры',
-                titlefont_size=16,
+                titlefont_size=14,
                 tickfont_size=14,
             ), 
         margin=dict(l=0, r=0, b=0, t=50),
