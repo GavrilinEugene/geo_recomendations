@@ -1,11 +1,13 @@
-import plotly.graph_objs as go
 import os
 import sys
 import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+import plotly.graph_objs as go
+
+# внутренние импорты
 import get_data as gd 
-from config import mapbox_token
+from config import mapbox_token, mapbox_style
 
 
 # датафрейм с границами округов
@@ -44,7 +46,7 @@ def get_map_base_layout():
         hovermode="closest",
         legend=dict(font=dict(size=14), orientation='h'),
         mapbox=dict(accesstoken=mapbox_token,
-                    style="mapbox://styles/evgeniigavrilin/ckqt8rwj44po218mk2movs1ij", zoom=11)
+                    style=mapbox_style, zoom=11)
     )
     return map_layout
 
@@ -102,7 +104,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                                     lon=df_opt.point_lon,
                                     mode='markers',
                                     marker=dict(
-                                        # autocolorscale=False,
                                         size=32,
                                         symbol='marker'
                                     ),
@@ -120,6 +121,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     df_objects_type = _select_infrastructure_data(current_adm_layer, df_objects)
     df_population = _select_infrastructure_data(current_adm_layer, df_total_population)
     
+    # собираем текущую статистику по покрытию инфраструктурой выбранного района
     df_unique_isochrones = df_objects_type.drop_duplicates(subset = ['zid'])
     analytics_data['current_infrastructure'] = df_unique_isochrones['customers_cnt_home'].sum()
     analytics_data['total_population'] = df_population['customers_cnt_home'].sum()    
@@ -129,7 +131,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     traces.append(go.Choroplethmapbox(z=gdf_type['customers_cnt_home'],
                             locations = gdf_type.index, 
                             colorscale = 'ylgn',
-                            # colorbar = dict(thickness=20, ticklen=3),
                             below="water",
                             geojson = geojson,
                             marker = dict(line=dict(width=0)),
@@ -164,7 +165,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                                    text=df_objects_type['name'] + '\n' + df_objects_type['address_name']))
 
     figure = go.Figure(data=traces,layout=map_layout)  
-    print("end_get_map")
     return figure, center_coord, analytics_data
 
 
@@ -199,12 +199,11 @@ def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_op
     :param run_human_example: отрисовка результата по коодинате, которую ввёл пользователь
     :param zoom: уровень масштабирования карты
     """
-    print("run_optimization", run_optinization)
+
     figure, center_coord, analytics_data = get_map_figure(current_infra_name, current_adm_layer, run_optinization, infra_n_value)
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
     figure['layout']['mapbox']['zoom'] = zoom if run_optinization == False else 13
-    print(analytics_data)
     return figure, analytics_data

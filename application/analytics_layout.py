@@ -1,8 +1,9 @@
-import plotly.graph_objs as go
 import os
 import numpy as np
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import plotly.graph_objs as go
 
 
 def update_analytics_figure(analytics_data, infra_n_value):

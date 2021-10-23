@@ -3,7 +3,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from dash import html, dcc
-import mydcc
 from analytics_layout import update_analytics_figure
 from map_layout import update_map_data
 from analytics_layout import update_analytics_figure
@@ -58,103 +57,65 @@ def get_layout():
     return html.Div(
         [
             dcc.Store(id='aggregate_data'),
-            # content
+            # весь контент
             html.Div(
                 [
                     # контроллеры и аналитика
                     html.Div(
                         [
-                            # controllers
                             html.Div(
                                 [
-                                    
-                                    html.Div(
-                                        [
-                                            # filter by region
-                                            create_administrative_selector(),
-                                        ],
-                                        className='row',
-                                    ),
-                                    html.Div(
-                                        [
-                                            # filter by infrastructure
-                                            create_infrustructure_selector(),
-                                        ],
-                                        className='row',
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.P(
-                                                'Новых объектов инфраструктуры:')
-                                        ],
-                                        className="row"
-                                    ),
-                                    dcc.Slider(
-                                        id='infrastructure_n_selector',
-                                        min=1,
-                                        max=10,
-                                        value=1,
-                                        marks={i: i for i in range(1, 11, 1)},
-                                        className="dcc_control"
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Button(
-                                                'Запустить поиск локаций', id='generate_button', n_clicks=0, className="eight columns"),
-                                        ],
-                                        className="row"
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.P(
-                                                'Анализ покрытия инфраструктурой:')
-                                        ],
-                                        className="row"
-                                    ),
-                                    html.Div(
-                                        [
-                                            dcc.Graph(id='analytics_graph', figure=analytics_fig)
-                                        ],
-                                        className="pretty_container"
-                                    ),
+                                    # фильтр по региону
+                                    create_administrative_selector(),
                                 ],
-                                className='container',
+                                className='row',
                             ),
-
-                            # # аналитика
-                            # html.Div(
-                            #     [
-                            #         html.Div(
-                            #             [
-                            #                 html.P(
-                            #                     'Новых объектов инфраструктуры:')
-                            #             ],
-                            #             className="row"
-                            #         ),
-                            #     ],
-                            #     className='container',
-                            # ),
+                            html.Div(
+                                [
+                                    # фильтр по инфраструктуре
+                                    create_infrustructure_selector(),
+                                ],
+                                className='row',
+                            ),
+                            html.Div(
+                                [
+                                    html.P('Новых объектов инфраструктуры:')
+                                ],
+                                className="row"
+                            ),
+                            dcc.Slider(
+                                id='infrastructure_n_selector',
+                                min=1,
+                                max=10,
+                                value=1,
+                                marks={i: i for i in range(1, 11, 1)},
+                                className="dcc_control"
+                            ),
+                            html.Div(
+                                [
+                                    html.Button(
+                                        'Запустить поиск локаций', id='generate_button', n_clicks=0, className="eight columns"),
+                                ],
+                                className="row"
+                            ),
+                            html.Div(
+                                [
+                                    dcc.Graph(id='analytics_graph', figure=analytics_fig)
+                                ],
+                                className="pretty_container"
+                            ),
                         ],
                         className='pretty_container four columns',
                     ),
                     # карта
                     html.Div([
-                        mydcc.Listener_mapbox(id="listener", aim='city_map'),
                         dcc.Graph(id='city_map', figure=geo_map_fig)
                     ],
                         className='pretty_container nine columns'
                     ),
                 ],
                 className='row'
-            ),
-
-            # hidden button with hotkey to be able handle click events on the map
-            html.Div(
-                [
-                    html.Button('selector_button', id='mouse_hidden_button',
-                                accessKey='i', n_clicks=0, hidden='HIDDEN')
-                ], style={'display': 'none'}
-            ),
+            )
         ],
         id="mainContainer",
         style={
