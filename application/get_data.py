@@ -5,6 +5,8 @@ import pandas as pd
 import geopandas as gpd
 import json
 from shapely import wkb
+from shapely.ops import unary_union
+from shapely.ops import cascaded_union
 
 import os
 import sys
@@ -68,14 +70,16 @@ def get_points(type_):
                    'Детские сады': "public.kindergarden_info",
                    'Больницы и поликлиники': "public.clinics_info"}
 
-    sql = f"""select name
+    sql = f"""select name, zid
                 , point_lat, point_lon
                 , address_name, pol_15min
                 , okrug_name, population as customers_cnt_home
                 from {dict_rename.get(type_)} """
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql), geom_col='pol_15min').reset_index()
-    geo_json = json.loads(gdf.to_json())
+    # gdf['combined_isochrone'] = gdf.name.map(gdf.groupby(['name'])['pol_15min'].apply(lambda x: cascaded_union(x)))
+    # geo_json = json.loads(gdf[['index', 'customers_cnt_home', 'combined_isochrone']].to_json())                                        
+    geo_json = json.loads(gdf[['index', 'customers_cnt_home', 'pol_15min']].to_json())
     return gdf, geo_json
 
 
@@ -147,6 +151,7 @@ def get_total_population():
 
 engine = create_connection()
 administrative_list = get_administrative_area_list()
+
 infrastructure_list = [
     {'label': 'МФЦ', 'value': 0},
     {'label': 'Школы', 'value': 1},

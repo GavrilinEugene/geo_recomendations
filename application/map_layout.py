@@ -79,7 +79,6 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     :param infra_n_value: числно новых объектов инфраструктуры
     """
 
-    print("start_get_map")
     analytics_data = {}
     traces = []
     
@@ -103,7 +102,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                                     lon=df_opt.point_lon,
                                     mode='markers',
                                     marker=dict(
-                                        autocolorscale=False,
+                                        # autocolorscale=False,
                                         size=32,
                                         symbol='marker'
                                     ),
@@ -120,7 +119,9 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     # рисуем изохроны, которые относятся к выбранным инфраструктурам
     df_objects_type = _select_infrastructure_data(current_adm_layer, df_objects)
     df_population = _select_infrastructure_data(current_adm_layer, df_total_population)
-    analytics_data['current_infrastructure'] = df_objects_type['customers_cnt_home'].sum()
+    
+    df_unique_isochrones = df_objects_type.drop_duplicates(subset = ['zid'])
+    analytics_data['current_infrastructure'] = df_unique_isochrones['customers_cnt_home'].sum()
     analytics_data['total_population'] = df_population['customers_cnt_home'].sum()    
 
     gdf_type = _select_infrastructure_data(current_adm_layer, gdf)
@@ -128,7 +129,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
     traces.append(go.Choroplethmapbox(z=gdf_type['customers_cnt_home'],
                             locations = gdf_type.index, 
                             colorscale = 'ylgn',
-                            colorbar = dict(thickness=20, ticklen=3),
+                            # colorbar = dict(thickness=20, ticklen=3),
                             below="water",
                             geojson = geojson,
                             marker = dict(line=dict(width=0)),
@@ -136,18 +137,15 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                             hoverinfo='z',
                             name = 'Численность населения',  
                             showlegend = True,     
-                            marker_line_width=0, marker_opacity=0.7))
+                            marker_opacity=0.7))
     
     # изохроны под инфраструктуру
-    for feature in geo_json_infra['features']:
-        feature['properties']['line-color'] = "red"
-        feature['properties']['line-width'] = 5
-    traces.append(go.Choroplethmapbox(z=df_objects_type['customers_cnt_home'],
-                                          locations=df_objects_type['index'],
+    traces.append(go.Choroplethmapbox(z=df_unique_isochrones['customers_cnt_home'],
+                                          locations=df_unique_isochrones['index'],
                                           below=True,
                                           geojson=geo_json_infra,
                                           showscale=False,
-                                          colorscale = [[0, 'rgba(255,255,255,.01)'], [1, 'rgba(255,255,255,.01)']],
+                                          colorscale = [[0, 'rgba(255,255,255,.2)'], [1, 'rgba(255,255,255,.2)']],
                                           marker = dict(line=dict(width=1, color = 'black'), opacity=0.9),
                                           name = 'Пешая доступность от инфраструктуры (текущая)',
                                           showlegend = True,  
@@ -163,7 +161,7 @@ def get_map_figure(type_, current_adm_layer, run_optinization, infra_n_value):
                                        symbol=dict_icons[type_]
                                    ),
                                    name=f"{type_} (текущие)",
-                                   text=df_objects['name'] + '\n' + df_objects['address_name']))
+                                   text=df_objects_type['name'] + '\n' + df_objects_type['address_name']))
 
     figure = go.Figure(data=traces,layout=map_layout)  
     print("end_get_map")
@@ -178,11 +176,11 @@ def create_layers(current_adm_layer):
     """
     for feature in df_adm_layers['features']:
         feature['properties']['line-color'] = "red" if feature['properties']['okrug_name'] == current_adm_layer else "black"
-        feature['properties']['line-width'] = 1.5 if feature['properties']['okrug_name'] == current_adm_layer else 0.1
+        feature['properties']['line-width'] = 3 if feature['properties']['okrug_name'] == current_adm_layer else 0.1
     layers = [dict(sourcetype='geojson',
                    source=feature['geometry'],
                    type='line',
-                   below='traces',
+                   below=-1,
                    line=dict(width=feature['properties']['line-width']),
                    color=feature['properties']['line-color'],
                    ) for feature in df_adm_layers['features']]
