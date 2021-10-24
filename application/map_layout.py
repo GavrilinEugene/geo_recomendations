@@ -116,8 +116,8 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
 
         analytics_data.update(
             dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))
-    else:
-        center_coord = gd.get_administrative_area_center(current_adm_layer)
+    
+    center_coord = gd.get_administrative_area_center(current_adm_layer)
 
     # обрезаем объекты по типу административного слоя
     df_objects_type = _select_infrastructure_data(
@@ -218,6 +218,6 @@ def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_op
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
-    figure['layout']['mapbox']['zoom'] = zoom if run_optinization == False else 13
+    figure['layout']['mapbox']['zoom'] = zoom
 
     return figure, analytics_data
