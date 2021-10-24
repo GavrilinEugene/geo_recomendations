@@ -41,7 +41,7 @@ def update_analytics_figure(analytics_data):
     ))
 
     fig.update_yaxes(range=[0,len(values)])
-    fig.update_xaxes(range=[0,total_poputaliton])
+    fig.update_xaxes(range=[0,1.1*total_poputaliton])
 
     labels = [f"+{idx}" for idx in range(0, len(values))]
 

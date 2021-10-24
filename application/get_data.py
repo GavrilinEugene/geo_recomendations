@@ -103,12 +103,6 @@ def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ')
 
     if current_adm_layer == 'Все':
         sql_filter = "location_filter = 'all'"
-    elif current_adm_layer == 'Новая Москва':
-        list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"
-        sql_filter = f"location_filter in ({list_okrug})"
-    elif current_adm_layer == 'Старая Москва':
-        list_okrug = "'Троицкий административный округ','Новомосковский административный округ'"
-        sql_filter = f"location_filter not in ({list_okrug})"
     else:
         sql_filter = f"location_filter = '{current_adm_layer}'"
 
@@ -117,11 +111,15 @@ def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ')
             select * from optimizer.coverage_report
             where kind = '{dict_rename.get(infra_type)}'
             and {sql_filter}
-            and zids_len = {n_results}
+            and zids_len = least({n_results}, (
+	            select max(zids_len) from optimizer.coverage_report
+	            where kind = '{dict_rename.get(infra_type)}'
+	            and {sql_filter} 
+            )) 
         limit 1)
         select center, pol_15min_with_base
         from izochrones_by_walk iw, t
-        where iw.zid = any(t.zid_list);
+        where iw.zid = any(t.zid_list)
     """
 
     sql_popultaion = f"""

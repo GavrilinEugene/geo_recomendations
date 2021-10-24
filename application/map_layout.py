@@ -17,10 +17,6 @@ geojson, gdf_population = gd.get_population_for_polygon()
 
 # инфраструктура
 dict_objects = {
-    "Детские сады": gd.get_points("Детские сады"),
-    "МФЦ": gd.get_points("МФЦ"),
-    # "Школы": gd.get_points("Школы"),
-    # "Больницы и поликлиники": gd.get_points("Больницы и поликлиники"),
 }
 
 
