@@ -68,7 +68,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--password', default='2')
     parser.add_argument('-s', '--serv', default='3')
     parser.add_argument('-port', '--port', default='25432')
-    parser.add_argument('-key', '--api-key', default ='demo')
+    parser.add_argument('-key', '--api_key', default ='demo')
     args = parser.parse_args()
 
     login = args.login
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     host = args.serv
     port = args.port
 
-    key = args.key
+    key = args.api_key
     rubric_list = get_rubric_list(key)
     print("Всего рубрик:" , len(rubric_list))
 
@@ -86,7 +86,7 @@ if __name__ == '__main__':
                 or 'поликлиник' in str.lower(x)
                 or 'больниц' in str.lower(x)]
 
-    rubric_list = ['платёжные терминалы']                
+    # rubric_list = ['платёжные терминалы']                
 
     # собираем данные по каждой рубрике отдельно
     dict_rubrics = {}
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # сохраняем данные
     output_file_name = 'gis_fixed_points'
     space = 'public'
-    output_file_path = os.path.join(os.getcwd(), 'data/{output_file_name}.csv')
+    output_file_path = os.path.join(os.getcwd(), f'data/precessed/{output_file_name}.csv')
     df_full.to_csv(output_file_path, sep=';', index=None)
     print(f"Данные по инфраструктуре сохранены в {output_file_path}")
     engine = create_engine(f'postgresql://{login}:{password}@{host}:{port}/postgis')
