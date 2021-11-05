@@ -1,8 +1,21 @@
 # Решение задачи [#6 хакатона ](https://leaders2021.innoagency.ru/06/)
 
 ## Оглавление:
-1. [Сбор данных](#Сбор-данных)
-2. [Приложение]( #Приложение)
+1. [Подготовка](#Подготовка)
+2. [Сбор данных](#Сбор-данных)
+3. [Приложение]( #Приложение)
+
+## Подготовка
+
+ - Для разработки приложения необходимо склонировать репозиторий и поставить необходимые питоновские пакеты 
+
+```Bash
+git clone https://github.com/GavrilinEugene/geo_recomendations.git
+cd geo_recomendations
+python3 -m venv venv
+source venv/bin/activate
+```
+ - Развернуть Postgis BD
 
 ## Сбор-данных
 
@@ -23,13 +36,8 @@
 ## Приложение
 
 Приложение написано на `python3` и использованием библиотеки `dash` для отрисовки рекомендательного сервиса
-Для запуска нужно:
+Для запуска нужно выполнить:
 
 ```Bash
-git clone https://github.com/GavrilinEugene/geo_recomendations.git
-cd geo_recomendations
-python3 -m venv venv
-source venv/bin/activate
-pip3 install -r requirements.txt
 python3 application/app.py
 ```
