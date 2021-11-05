@@ -68,7 +68,7 @@ def get_points(current_adm_layer):
     dict_rename = {'МФЦ': "public.mfc_info",
                    'Школы': "public.school_info",
                    'Детские сады': "public.kindergarden_info",
-                   'Больницы и поликлиники': "public.clinics_info"}
+                   'Больницы и поликлиники': "public.clinic_info"}
 
     sql = f"""select name, zid
                 , point_lat, point_lon
