@@ -13,6 +13,12 @@
 Для работы приложения было развёрнута база данных postgis, куда были выгруженные собранные и исходные данные
 Пример выгрузки данных (/src/create_adm_tables.py)
 
+Для разворачивания данных, необходимых для запуска оптимизации необходимо выполнить команду
+```Bash
+./collect_data.sh [login] [password] [host] [port]   
+где агрументами являются реквезиты для подключения к БД postgis      
+```
+
 
 ## Приложение
 
@@ -27,4 +33,3 @@ source venv/bin/activate
 pip3 install -r requirements.txt
 python3 application/app.py
 ```
-    
