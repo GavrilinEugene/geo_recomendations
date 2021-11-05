@@ -82,6 +82,7 @@ target/
 # exclude data from source control by default
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/*.zip
 !data/raw/*.dvc
 data/processed/*
 !data/processed/.gitkeep
