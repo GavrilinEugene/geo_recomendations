@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import geopandas as gpd
 from shapely.ops import cascaded_union
@@ -7,43 +8,53 @@ from utils import *
 import argparse
 
 """
-данный файл собирает создаёт пару таблиц с административным делением и численностью населения в postgress
+данный файл собирает создаёт пару таблиц с административным делением и численностью населения в БД
 """
 
-
+LOCATIONS_GRID = os.path.join(os.getcwd(), "data/raw/01_CLocation_July.csv")
+LOCATIONS_SHAPE = os.path.join(os.getcwd(), "data/raw/fishnet2021/fishnet2021.shp")
+LOCATIONS_ADM = os.path.join(os.getcwd(), "data/raw/admzones2021/admzones2021.shp")
 
 def run(args):
 
-    print(args)
     login = args.login
     password = args.password
-    s = args.serv
+    host = args.serv
+    port  = args.port
+    engine = create_engine(f'postgresql://{login}:{password}@{host}:{port}/postgis')
 
     # регионы
-    df_adm = gpd.read_file("data/raw/admzones2021/admzones2021.shp")
+    df_adm = gpd.read_file(LOCATIONS_ADM)
     df_adm = df_adm[['adm_name', 'okrug_name', 'sub_ter', 'geometry']]
     df_adm = gpd.GeoDataFrame(df_adm)
 
     # население
-    df_home_job = pd.read_csv("data/raw/01_CLocation_July.csv")
-    df_shape = gpd.read_file("data/raw/fishnet2021/fishnet2021.shp")
+    df_home_job = pd.read_csv(LOCATIONS_GRID)
+    df_shape = gpd.read_file(LOCATIONS_SHAPE)
     df_home_job.rename(columns={'zid': 'cell_zid'}, inplace=True)
     df_home_job = pd.merge(df_home_job, df_shape, on = ['cell_zid'])
     gdf_home_job = gpd.GeoDataFrame(df_home_job)
 
-    #
-    df3 = gpd.sjoin(df_adm, gdf_home_job, how='inner', op='intersects')
-    df3 = df3[['cell_zid', 'adm_name', 'okrug_name', 'sub_ter', 'geometry']]
-    df3 = df3.drop_duplicates(subset = ['cell_zid'])
-    df4 = df3.drop_duplicates(subset = ['adm_name'])[['adm_name', 'okrug_name', 'sub_ter', 'geometry']]
-    df4 = df4[df4['sub_ter']!='Московская область']
-    df_all_reg = df4.copy()
-    df4['geometry'] = df4['geometry'].apply(wkb_hexer)
+    # собираем фрейм cell_zid|регион|геометрия
+    df_join = gpd.sjoin(df_adm, gdf_home_job, how='inner', op='intersects')
+    df_adm_region = df_join[['cell_zid', 'adm_name', 'okrug_name', 'sub_ter']]
+    drop_table(engine, 'public', 'adm_regions')
+    df_adm_region.to_sql('adm_regions', engine, method=psql_insert_copy)
+    print("adm_regions создана")
 
-    engine = create_engine(f'postgresql://{login}:{password}@{s}:25432/postgis')
-    drop_table(engine, 'public.adm_regions_with_geometry')
-    df4.to_sql('adm_regions_with_geometry', engine, method=psql_insert_copy)
+    # собираем фрейм adm_region|геометрия
+    dfa_adm_group = df_join[['cell_zid', 'adm_name', 'okrug_name', 'sub_ter', 'geometry']]
+    dfa_adm_group = dfa_adm_group.drop_duplicates(subset = ['cell_zid'])
+    dfa_adm_group = dfa_adm_group.drop_duplicates(subset = ['adm_name'])[['adm_name', 'okrug_name', 'sub_ter', 'geometry']]
+    dfa_adm_group = dfa_adm_group[dfa_adm_group['sub_ter']!='Московская область']
+    df_all_reg = dfa_adm_group.copy()
+    dfa_adm_group['geometry'] = dfa_adm_group['geometry'].apply(wkb_hexer)
 
+    drop_table(engine, 'public', 'adm_regions_with_geometry')
+    dfa_adm_group.to_sql('adm_regions_with_geometry', engine, method=psql_insert_copy)
+    print("adm_regions_with_geometry создана")
+
+    # собираем фрейм okrug_name|геометрия
     df_all_reg = df_all_reg.groupby(['okrug_name'])['geometry'].apply(lambda x: cascaded_union(x)).reset_index()
 
     combined = cascaded_union(df_all_reg['geometry'])
@@ -58,16 +69,17 @@ def run(args):
     df_all_reg['index'] = [3,4,5,6,7,8,9,10,11,12,13,14,0,1,2]
     df_all_reg = df_all_reg.sort_values(by = ['index'])
 
-    drop_table(engine, 'public.okrug_name_with_geometry')
+    drop_table(engine, 'public', 'okrug_name_with_geometry')
     df_all_reg['geometry'] = df_all_reg['geometry'].apply(wkb_hexer)
     df_all_reg.to_sql('okrug_name_with_geometry', engine, method=psql_insert_copy)
+    print("okrug_name_with_geometry создана")
+
 
 if __name__ == '__main__':
-    
-
     parser = argparse.ArgumentParser(description='desc')
     parser.add_argument('-l', '--login', default='1')
     parser.add_argument('-p', '--password', default='2')
     parser.add_argument('-s', '--serv', default='3')
+    parser.add_argument('-port', '--port', default='25432')
     args = parser.parse_args()
     run(args)    

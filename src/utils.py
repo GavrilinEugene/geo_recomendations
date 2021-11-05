@@ -76,11 +76,28 @@ def wkb_hexer(line):
     return line.wkb_hex
 
 
-def drop_table(engine, table_name):
+
+def drop_table(engine, space, table_name):
+    """ Удалить таблицу из бд, если существует
+        :engine sqlalchemy соединение к бд
+        :table_name имя таблицы
+        :space пространство
+    """
     try:
         c = engine.connect()
-        c.execute(f"drop table {table_name}")
+        c.execute(f"drop table {space}.{table_name}")
     except:
         pass
+
+
+def save_table_no_geom(df, engine, space, table_name):
+    """ Сохранить датафрейм без колонок типа geometry в таблицу
+        :param df: датафрейм
+        :engine sqlalchemy соединение к бд
+        :table_name имя таблицы
+        :space пространство
+    """
+    drop_table(engine, space, table_name)
+    df.to_sql(f'{table_name}', engine, method=psql_insert_copy)
 
        
