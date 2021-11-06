@@ -104,7 +104,28 @@ def get_bad_polygons():
 
     # формируем одну объединённую изохрону объектов на каждый округ
     geo_json= json.loads(gdf.to_json())
+    return gdf, geo_json
+
+def get_get_heatmap(infra_type):
+    """
+    Получение объектов инфраструктуры с честным распределением населения
+
+    """
+    dict_rename = {'МФЦ': "mfc",
+                'Школы': "school",
+                'Детские сады': "kindergarden",
+                'Больницы и поликлиники': "clinic"}
+
+
+    sql = f"""select * from optimizer.heatmap where kind = '{dict_rename[infra_type]}'"""
+    gdf = gpd.GeoDataFrame.from_postgis(con=engine,
+                                        sql=text(sql), geom_col='geometry_base').reset_index()
+    gdf['new_obj_sum'].fillna(0, inplace=True)
+
+    # формируем одну объединённую изохрону объектов на каждый округ
+    geo_json= json.loads(gdf.to_json())
     return gdf, geo_json    
+
 
 
 def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ'):

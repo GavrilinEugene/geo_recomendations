@@ -61,7 +61,7 @@ def _select_infrastructure_data(current_adm_layer, df):
     return df_type
 
 
-def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
+def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type, current_adm_layer):
     """
     Добавление слоёв на карту, которые связаны с оптимизацией: новые локации и изохроны
     """
@@ -71,8 +71,8 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                       geojson=geo_json_opt,
                                       showscale=False,
                                       showlegend=True,
-                                      legendgroup = 'output',
-                                      legendgrouptitle_text = f'План для открытия',
+                                      legendgroup='output',
+                                      legendgrouptitle_text=f'План для открытия',
                                       name="Области покрытия (изохроны)",
                                       colorscale=[[0, 'rgba(240,192,192,.5)'], [
                                           1, 'rgba(240,192,192,.5)']],
@@ -84,8 +84,8 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                    lon=df_opt.point_lon,
                                    below=-1,
                                    mode='markers',
-                                   legendgroup = 'output',
-                                   legendgrouptitle_text = f'План для открытия',
+                                   legendgroup='output',
+                                   legendgrouptitle_text=f'План для открытия',
                                    marker=dict(
                                        autocolorscale=False,
                                        size=16,
@@ -95,6 +95,8 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                    name=f"Новые {infra_type}",
                                    text=df_opt['index']
                                    ))
+
+                                
 
 
 def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_value):
@@ -116,7 +118,11 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
     df_objects, df_simple_isochrone, geo_json_union = dict_objects[infra_type]
 
     
+
     center_coord = gd.get_administrative_area_center(current_adm_layer)
+    gdf_heatmap, geo_json_heatmap = gd.get_get_heatmap(infra_type)
+    gdf_heatmap_type = _select_infrastructure_data(
+        current_adm_layer, gdf_heatmap)
 
     # обрезаем объекты по типу административного слоя
     df_objects_type = _select_infrastructure_data(
@@ -127,8 +133,8 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
         current_adm_layer, df_simple_isochrone)
     gdf_population_type = _select_infrastructure_data(
         current_adm_layer, gdf_population)
-
-    gdf_bad_polygons_layer =  _select_infrastructure_data(current_adm_layer, gdf_bad_polygons)
+    gdf_bad_polygons_layer = _select_infrastructure_data(
+        current_adm_layer, gdf_bad_polygons)
 
     # собираем текущую статистику по покрытию инфраструктурой выбранного района
     df_unique_isochrones = df_objects_type.drop_duplicates(subset=['zid'])
@@ -144,13 +150,14 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       marker=dict(line=dict(width=0)),
                                       showscale=False,
                                       text='<br>население в квадрате: ' +
-                                            round(gdf_population_type['customers_cnt_home']).astype(str),
-                                      hoverinfo = "text",
+                                            round(gdf_population_type['customers_cnt_home']).astype(
+                                                str),
+                                      hoverinfo="text",
                                       name='Численность населения',
                                       showlegend=True,
                                       marker_opacity=0.7))
 
-    # рисуем подложку с плохими полигонами
+    # рисуем плохие полигоны
     traces.append(go.Choroplethmapbox(z=gdf_bad_polygons_layer['bad_polygon'],
                                       locations=gdf_bad_polygons_layer.index,
                                       colorscale='RdYlGn_r',
@@ -158,14 +165,15 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       geojson=geojson_bad_poly,
                                       marker=dict(line=dict(width=0)),
                                       showscale=False,
-                                    #   text='<br>население в квадрате: ' +
-                                    #         round(gdf_population_type['customers_cnt_home']).astype(str) + 
-                                    #         '<br>плохой полигон: ' + gdf_bad_polygons_layer['bad_polygon'].astype(str),
-                                    #   hoverinfo = "text",
+                                      #   text='<br>население в квадрате: ' +
+                                      #         round(gdf_population_type['customers_cnt_home']).astype(str) +
+                                      #         '<br>плохой полигон: ' + gdf_bad_polygons_layer['bad_polygon'].astype(str),
+                                      #   hoverinfo = "text",
                                       name='Квадраты с ограничениями для оптимизации',
                                       visible='legendonly',
                                       showlegend=True,
-                                      marker_opacity=0.3))                                      
+                                      marker_opacity=0.3))
+
 
     # изохрона под инфраструктуру
     traces.append(go.Choroplethmapbox(z=df_simple_isochrone['index'],
@@ -173,8 +181,8 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       below=True,
                                       geojson=geo_json_union,
                                       showscale=False,
-                                      legendgroup = 'input',
-                                      legendgrouptitle_text = f'Существующая инфраструктура',
+                                      legendgroup='input',
+                                      legendgrouptitle_text=f'Существующая инфраструктура',
                                       colorscale=[[0, 'rgba(231,231,231,.6)'], [
                                           1, 'rgba(231,231,231,.6)']],
                                       marker=dict(
@@ -193,22 +201,42 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                        symbol='circle',
                                        color='dimgray'
                                    ),
-                                   legendgroup = 'input',
-                                   legendgrouptitle_text = f'Существующая инфраструктура',
+                                   legendgroup='input',
+                                   legendgrouptitle_text=f'Существующая инфраструктура',
                                    name=f"Текущие {infra_type}",
                                    text=df_objects_type['name'] + '<br>' +
                                    df_objects_type['address_name'] + '<br>население в пешей доступности:' +
                                    round(df_objects_type['customers_cnt_home']).astype(str)))
+
+
+
+    # рисуем heatmap
+    traces.append(go.Choroplethmapbox(z=gdf_heatmap_type['new_obj_sum'],
+                                      locations=gdf_heatmap_type.index,
+                                      colorscale='RdYlGn_r',
+                                      below="water",
+                                      geojson=geo_json_heatmap,
+                                      marker=dict(line=dict(width=0)),
+                                      legendgroup='output1',
+                                      legendgrouptitle_text=f'{infra_type}: Лучшие локации',
+                                      showscale=False,
+                                      text='<br>Покрытие при выборе этого квадрата: ' +
+                                            round(gdf_heatmap_type['new_obj_sum']).astype(str),
+                                      hoverinfo = "text",
+                                      name=f'Heatmap лучших локаций для размещения',
+                                      visible='legendonly',
+                                      showlegend=True,
+                                      marker_opacity=0.3))                                         
 
     if run_optinization == True:
         df_opt, geo_json_opt, _, df_opt_analytics = \
             gd.get_optimization_result(
                 current_adm_layer, infra_n_value, infra_type)
 
-        _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type)
+        _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type, current_adm_layer)
 
         analytics_data.update(
-            dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))                                   
+            dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))
 
     figure = go.Figure(data=traces, layout=map_layout)
     return figure, center_coord, analytics_data
@@ -251,11 +279,11 @@ def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_op
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
     figure['layout']['legend'] = dict(
-                title=dict(text="Слои карты"),
-                y=0.04,
-                x=0.01,
-                bgcolor = "white"
-            )
+        title=dict(text="Слои карты"),
+        y=0.04,
+        x=0.01,
+        bgcolor="white"
+    )
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
     figure['layout']['mapbox']['zoom'] = zoom
