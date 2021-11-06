@@ -158,11 +158,11 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       geojson=geojson_bad_poly,
                                       marker=dict(line=dict(width=0)),
                                       showscale=False,
-                                      text='<br>население в квадрате: ' +
-                                            round(gdf_population_type['customers_cnt_home']).astype(str) + 
-                                            '<br>плохой полигон: ' + gdf_bad_polygons_layer['bad_polygon'].astype(str),
-                                      hoverinfo = "text",
-                                      name='Плохие полигоны',
+                                    #   text='<br>население в квадрате: ' +
+                                    #         round(gdf_population_type['customers_cnt_home']).astype(str) + 
+                                    #         '<br>плохой полигон: ' + gdf_bad_polygons_layer['bad_polygon'].astype(str),
+                                    #   hoverinfo = "text",
+                                      name='Квадраты с ограничениями для оптимизации',
                                       visible='legendonly',
                                       showlegend=True,
                                       marker_opacity=0.3))                                      
