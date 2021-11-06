@@ -1,0 +1,192 @@
+//В комментарии указано название файла, который получается при запуске этого кода
+//на overpass turbo
+// commercial.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="commercial"]({{bbox}});
+  relation["landuse"="commercial"]({{bbox}});
+);
+out geom;
+>;
+
+// cemetery.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="cemetery"]({{bbox}});
+  relation["landuse"="cemetery"]({{bbox}});
+);
+out geom;
+>;
+
+// industrial.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="industrial"]({{bbox}});
+  relation["landuse"="industrial"]({{bbox}});
+);
+out geom;
+>;
+
+// construction.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="construction"]({{bbox}});
+  relation["landuse"="construction"]({{bbox}});
+);
+out geom;
+>;
+
+// railway.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="railway"]({{bbox}});
+  relation["landuse"="railway"]({{bbox}});
+);
+out geom;
+>;
+
+// park.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["leisure"="park"]({{bbox}});
+  relation["leisure"="park"]({{bbox}});
+);
+out geom;
+>;
+
+// wood.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["natural"="wood"]({{bbox}});
+  relation["natural"="wood"]({{bbox}});
+);
+out geom;
+>;
+
+// aerodrome.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["aeroway"="aerodrome"]({{bbox}});
+  relation["aeroway"="aerodrome"]({{bbox}}); 
+);
+out geom;
+>;
+
+//water.geojson
+[out:json][bbox:{{bbox}}];
+(
+  node["natural"="water"]({{bbox}});
+  way["natural"="water"]({{bbox}});
+  relation["natural"="water"]({{bbox}});
+);
+out geom;
+>;
+
+
+// water2.geojson
+[out:json][bbox:{{bbox}}];
+(
+  node["water"]({{bbox}});
+  way["water"]({{bbox}});
+  relation["water"]({{bbox}}); 
+);
+
+out geom;
+>;
+
+// forest.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="forest"]({{bbox}});
+  relation["landuse"="forest"]({{bbox}});
+);
+out geom;
+>;
+
+// quarry.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="quarry"]({{bbox}});
+  relation["landuse"="quarry"]({{bbox}});
+);
+out geom;
+>;
+
+// military.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="military"]({{bbox}});
+  relation["landuse"="military"]({{bbox}});
+);
+out geom;
+>;
+
+// farmyard.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="farmyard"]({{bbox}});
+  relation["landuse"="farmyard"]({{bbox}});
+);
+out geom;
+>;
+
+// greenhouse_horticulture.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="greenhouse_horticulture"]({{bbox}});
+  relation["landuse"="greenhouse_horticulture"]({{bbox}});
+);
+out geom;
+>;
+
+// retail.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="retail"]({{bbox}});
+  relation["landuse"="retail"]({{bbox}});
+);
+out geom;
+>;
+
+// railway.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="railway"]({{bbox}});
+  relation["landuse"="railway"]({{bbox}});
+);
+out geom;
+>;
+
+// allotments.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["landuse"="allotments"]({{bbox}});
+  relation["landuse"="allotments"]({{bbox}});
+);
+out geom;
+>;
+
+//mall.geojson
+[out:json][bbox:{{bbox}}];
+(
+  way["shop"="mall"]({{bbox}});
+  relation["shop"="mall"]({{bbox}});
+);
+out geom;
+>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
