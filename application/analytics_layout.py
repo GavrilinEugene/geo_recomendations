@@ -35,7 +35,10 @@ def update_analytics_figure(analytics_data):
         textposition="inside",
         textangle=0,
         marker=dict(color = ratios,
-                     colorscale='ylgn', line_width = 2, opacity=0.9),
+                    colorscale=[[0, 'rgba(103, 214, 245,.8)'], [
+                                 1, 'rgba(103, 214, 245,.8)']],
+                    #  colorscale='ylgn', 
+                     line_width = 2, opacity=0.9),
         textfont_color="black",
         orientation='h'
     ))

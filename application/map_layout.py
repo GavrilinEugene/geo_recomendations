@@ -69,17 +69,19 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                       showscale=False,
                                       showlegend=True,
                                       name="Пешая доступность от инфраструктуры (новые объекты)",
-                                      colorscale='ylgn',
+                                      colorscale=[[0, 'rgba(255,255,255,.6)'], [
+                                          1, 'rgba(255,255,255,.6)']],
                                       marker=dict(
-                                          line=dict(width=2, color='rgb(0, 51, 0)'), opacity=0.7),
+                                          line=dict(width=2.5, color='rgb(0, 51, 0)'), opacity=0.7),
                                       ))
 
     traces.append(go.Scattermapbox(lat=df_opt.point_lat,
                                    lon=df_opt.point_lon,
+                                   below=-1,
                                    mode='markers',
                                    marker=dict(
                                        autocolorscale=False,
-                                       size=12,
+                                       size=16,
                                        symbol='circle',
                                        color='red'
                                    ),
@@ -106,16 +108,6 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
         dict_objects[infra_type] = gd.get_points(infra_type)
     df_objects, df_simple_isochrone, geo_json_union = dict_objects[infra_type]
 
-
-    if run_optinization == True:
-        df_opt, geo_json_opt, center_coord, df_opt_analytics = \
-            gd.get_optimization_result(
-                current_adm_layer, infra_n_value, infra_type)
-
-        _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type)
-
-        analytics_data.update(
-            dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))
     
     center_coord = gd.get_administrative_area_center(current_adm_layer)
 
@@ -142,7 +134,9 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       geojson=geojson,
                                       marker=dict(line=dict(width=0)),
                                       showscale=False,
-                                      hoverinfo='z',
+                                      text='<br>население в квадрате: ' +
+                                            round(gdf_population_type['customers_cnt_home']).astype(str),
+                                      hoverinfo = "text",
                                       name='Численность населения',
                                       showlegend=True,
                                       marker_opacity=0.7))
@@ -156,7 +150,7 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       colorscale=[[0, 'rgba(255,255,255,.2)'], [
                                           1, 'rgba(255,255,255,.2)']],
                                       marker=dict(
-                                          line=dict(width=1.2, color='dimgray'), opacity=0.9),
+                                          line=dict(width=1.6, color='dimgray'), opacity=0.9),
                                       name = 'Пешая доступность от инфраструктуры (текущая)',
                                       showlegend=True,
                                       hoverinfo='skip'
@@ -167,7 +161,7 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                    lon=df_objects_type.point_lon,
                                    mode='markers',
                                    marker=dict(
-                                       size=8,
+                                       size=10,
                                        symbol='circle',
                                        color='dimgray'
                                    ),
@@ -175,6 +169,16 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                    text=df_objects_type['name'] + '<br>' +
                                    df_objects_type['address_name'] + '<br>население в пешей доступности:' +
                                    round(df_objects_type['customers_cnt_home']).astype(str)))
+
+    if run_optinization == True:
+        df_opt, geo_json_opt, center_coord, df_opt_analytics = \
+            gd.get_optimization_result(
+                current_adm_layer, infra_n_value, infra_type)
+
+        _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type)
+
+        analytics_data.update(
+            dict(zip(df_opt_analytics['zids_len'], df_opt_analytics['added_coverage'])))                                   
 
     figure = go.Figure(data=traces, layout=map_layout)
     return figure, center_coord, analytics_data
