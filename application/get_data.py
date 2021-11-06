@@ -87,6 +87,26 @@ def get_points(current_adm_layer):
     return gdf, gdf_isochrone, geo_json_isochrone
 
 
+def get_bad_polygons():
+    """
+    Получение объектов инфраструктуры с честным распределением населения
+
+    """
+
+    sql = f"""select adbz.cell_zid
+        , adbz.okrug_name
+        , adbz.geometry 
+        , case when bz.geometry_base is null then 0 else 1 end as bad_polygon
+    from all_data_by_zids adbz 
+    left join bad_zids bz on bz.zid = adbz.cell_zid """
+    gdf = gpd.GeoDataFrame.from_postgis(con=engine,
+                                        sql=text(sql), geom_col='geometry').reset_index()
+
+    # формируем одну объединённую изохрону объектов на каждый округ
+    geo_json= json.loads(gdf.to_json())
+    return gdf, geo_json    
+
+
 def get_optimization_result(current_adm_layer, n_results=1, infra_type='МФЦ'):
     """
     получение предрассчитанных данных оптимизации

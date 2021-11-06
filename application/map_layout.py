@@ -15,6 +15,9 @@ df_total_population = gd.get_total_population()
 # подложка с населением
 geojson, gdf_population = gd.get_population_for_polygon()
 
+# слой с плохими полигонами
+# gdf_bad_polygons, geojson_bad_poly = gd.get_bad_polygons()
+
 # инфраструктура
 dict_objects = {
 }
@@ -68,9 +71,11 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                       geojson=geo_json_opt,
                                       showscale=False,
                                       showlegend=True,
-                                      name="Пешая доступность от инфраструктуры (новые объекты)",
-                                      colorscale=[[0, 'rgba(255,255,255,.6)'], [
-                                          1, 'rgba(255,255,255,.6)']],
+                                      legendgroup = 'output',
+                                      legendgrouptitle_text = f'План для открытия',
+                                      name="Области покрытия (изохроны)",
+                                      colorscale=[[0, 'rgba(240,192,192,.5)'], [
+                                          1, 'rgba(240,192,192,.5)']],
                                       marker=dict(
                                           line=dict(width=2.5, color='rgb(0, 51, 0)'), opacity=0.7),
                                       ))
@@ -79,13 +84,15 @@ def _add_optimization_traces(traces, df_opt, geo_json_opt, infra_type):
                                    lon=df_opt.point_lon,
                                    below=-1,
                                    mode='markers',
+                                   legendgroup = 'output',
+                                   legendgrouptitle_text = f'План для открытия',
                                    marker=dict(
                                        autocolorscale=False,
                                        size=16,
                                        symbol='circle',
-                                       color='red'
+                                       color='rgb(244, 44, 44)'
                                    ),
-                                   name=f"{infra_type} (новые)",
+                                   name=f"Новые {infra_type}",
                                    text=df_opt['index']
                                    ))
 
@@ -121,6 +128,8 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
     gdf_population_type = _select_infrastructure_data(
         current_adm_layer, gdf_population)
 
+    # gdf_bad_polygons_layer =  _select_infrastructure_data(current_adm_layer, gdf_bad_polygons)
+
     # собираем текущую статистику по покрытию инфраструктурой выбранного района
     df_unique_isochrones = df_objects_type.drop_duplicates(subset=['zid'])
     analytics_data['current_infrastructure'] = df_unique_isochrones['customers_cnt_home'].sum()
@@ -141,17 +150,34 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       showlegend=True,
                                       marker_opacity=0.7))
 
+    # рисуем подложку с плохими полигонами
+    # traces.append(go.Choroplethmapbox(z=gdf_bad_polygons_layer['bad_polygon'],
+    #                                   locations=gdf_bad_polygons_layer.index,
+    #                                   colorscale='RdYlGn_r',
+    #                                   below="water",
+    #                                   geojson=geojson_bad_poly,
+    #                                   marker=dict(line=dict(width=0)),
+    #                                   showscale=False,
+    #                                 #   text='<br>население в квадрате: ' +
+    #                                 #         round(gdf_population_type['customers_cnt_home']).astype(str),
+    #                                 #   hoverinfo = "text",
+    #                                   name='Плохие полигоны',
+    #                                   showlegend=True,
+    #                                   marker_opacity=0.7))                                      
+
     # изохрона под инфраструктуру
     traces.append(go.Choroplethmapbox(z=df_simple_isochrone['index'],
                                       locations=df_simple_isochrone['index'],
                                       below=True,
                                       geojson=geo_json_union,
                                       showscale=False,
-                                      colorscale=[[0, 'rgba(255,255,255,.2)'], [
-                                          1, 'rgba(255,255,255,.2)']],
+                                      legendgroup = 'input',
+                                      legendgrouptitle_text = f'Существующая инфраструктура',
+                                      colorscale=[[0, 'rgba(231,231,231,.6)'], [
+                                          1, 'rgba(231,231,231,.6)']],
                                       marker=dict(
                                           line=dict(width=1.6, color='dimgray'), opacity=0.9),
-                                      name = 'Пешая доступность от инфраструктуры (текущая)',
+                                      name="Области покрытия (изохроны)",
                                       showlegend=True,
                                       hoverinfo='skip'
                                       ))
@@ -165,13 +191,15 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                        symbol='circle',
                                        color='dimgray'
                                    ),
-                                   name=f"{infra_type} (текущие)",
+                                   legendgroup = 'input',
+                                   legendgrouptitle_text = f'Существующая инфраструктура',
+                                   name=f"Текущие {infra_type}",
                                    text=df_objects_type['name'] + '<br>' +
                                    df_objects_type['address_name'] + '<br>население в пешей доступности:' +
                                    round(df_objects_type['customers_cnt_home']).astype(str)))
 
     if run_optinization == True:
-        df_opt, geo_json_opt, center_coord, df_opt_analytics = \
+        df_opt, geo_json_opt, _, df_opt_analytics = \
             gd.get_optimization_result(
                 current_adm_layer, infra_n_value, infra_type)
 
@@ -220,8 +248,13 @@ def update_map_data(current_adm_layer, current_infra_name, infra_n_value, run_op
         current_infra_name, current_adm_layer, run_optinization, infra_n_value)
     layers = create_layers(current_adm_layer)
     figure['layout']['mapbox']['layers'] = layers
+    figure['layout']['legend'] = dict(
+                title=dict(text="Слои карты"),
+                y=0.04,
+                x=0.01,
+                bgcolor = "white"
+            )
     figure['layout']['mapbox']['center'] = dict(
         lat=center_coord.y, lon=center_coord.x)
     figure['layout']['mapbox']['zoom'] = zoom
-
     return figure, analytics_data
