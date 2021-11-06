@@ -16,7 +16,7 @@ df_total_population = gd.get_total_population()
 geojson, gdf_population = gd.get_population_for_polygon()
 
 # слой с плохими полигонами
-# gdf_bad_polygons, geojson_bad_poly = gd.get_bad_polygons()
+gdf_bad_polygons, geojson_bad_poly = gd.get_bad_polygons()
 
 # инфраструктура
 dict_objects = {
@@ -128,7 +128,7 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
     gdf_population_type = _select_infrastructure_data(
         current_adm_layer, gdf_population)
 
-    # gdf_bad_polygons_layer =  _select_infrastructure_data(current_adm_layer, gdf_bad_polygons)
+    gdf_bad_polygons_layer =  _select_infrastructure_data(current_adm_layer, gdf_bad_polygons)
 
     # собираем текущую статистику по покрытию инфраструктурой выбранного района
     df_unique_isochrones = df_objects_type.drop_duplicates(subset=['zid'])
@@ -151,19 +151,21 @@ def get_map_figure(infra_type, current_adm_layer, run_optinization, infra_n_valu
                                       marker_opacity=0.7))
 
     # рисуем подложку с плохими полигонами
-    # traces.append(go.Choroplethmapbox(z=gdf_bad_polygons_layer['bad_polygon'],
-    #                                   locations=gdf_bad_polygons_layer.index,
-    #                                   colorscale='RdYlGn_r',
-    #                                   below="water",
-    #                                   geojson=geojson_bad_poly,
-    #                                   marker=dict(line=dict(width=0)),
-    #                                   showscale=False,
-    #                                 #   text='<br>население в квадрате: ' +
-    #                                 #         round(gdf_population_type['customers_cnt_home']).astype(str),
-    #                                 #   hoverinfo = "text",
-    #                                   name='Плохие полигоны',
-    #                                   showlegend=True,
-    #                                   marker_opacity=0.7))                                      
+    traces.append(go.Choroplethmapbox(z=gdf_bad_polygons_layer['bad_polygon'],
+                                      locations=gdf_bad_polygons_layer.index,
+                                      colorscale='RdYlGn_r',
+                                      below="water",
+                                      geojson=geojson_bad_poly,
+                                      marker=dict(line=dict(width=0)),
+                                      showscale=False,
+                                      text='<br>население в квадрате: ' +
+                                            round(gdf_population_type['customers_cnt_home']).astype(str) + 
+                                            '<br>плохой полигон: ' + gdf_bad_polygons_layer['bad_polygon'].astype(str),
+                                      hoverinfo = "text",
+                                      name='Плохие полигоны',
+                                      visible='legendonly',
+                                      showlegend=True,
+                                      marker_opacity=0.3))                                      
 
     # изохрона под инфраструктуру
     traces.append(go.Choroplethmapbox(z=df_simple_isochrone['index'],

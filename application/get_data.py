@@ -93,11 +93,11 @@ def get_bad_polygons():
 
     """
 
-    sql = f"""select adbz.cell_zid
+    sql = f"""select distinct adbz.cell_zid
         , adbz.okrug_name
-        , adbz.geometry 
+        , adbz.geometry2 as geometry
         , case when bz.geometry_base is null then 0 else 1 end as bad_polygon
-    from all_data_by_zids adbz 
+    from all_data_by_zids adbz
     left join bad_zids bz on bz.zid = adbz.cell_zid """
     gdf = gpd.GeoDataFrame.from_postgis(con=engine,
                                         sql=text(sql), geom_col='geometry').reset_index()
